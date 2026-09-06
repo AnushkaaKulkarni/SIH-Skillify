@@ -50,7 +50,8 @@ export default function LearnerDashboard() {
 
     const fetchDashboardData = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/learner/dashboard`, {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+        const res = await fetch(`${baseUrl}/learner/dashboard`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 

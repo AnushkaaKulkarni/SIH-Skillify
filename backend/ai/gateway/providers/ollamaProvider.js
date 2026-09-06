@@ -13,7 +13,7 @@ class OllamaProvider extends BaseAIProvider {
   constructor(config = {}) {
     super(config);
     this.baseUrl = config.baseUrl || process.env.OLLAMA_BASE_URL || "http://localhost:11434";
-    this.modelName = config.model || process.env.OLLAMA_MODEL || "qwen3:8b";
+    this.modelName = config.model || process.env.OLLAMA_MODEL || "qwen2.5:7b";
     this.type = "private";
     
     // Ollama is optional - don't require it for startup
@@ -179,9 +179,13 @@ class OllamaProvider extends BaseAIProvider {
       
       const data = await response.json();
       
-      // Check if the configured model is available
+      // Check if the configured model is available (exact or family match)
       const models = data?.models || [];
-      const modelAvailable = models.some(m => m?.name === this.modelName);
+      const modelPrefix = this.modelName.split(":")[0];
+      const modelAvailable = models.length > 0 && (
+        models.some(m => m?.name === this.modelName) ||
+        models.some(m => m?.name?.includes(modelPrefix))
+      );
       
       const latency = Date.now() - startTime;
       

@@ -6,7 +6,6 @@ const resultHashVerificationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "ExamAttempt",
       required: true,
-      unique: true,
     },
     exam: {
       type: mongoose.Schema.Types.ObjectId,
@@ -87,8 +86,7 @@ const resultHashVerificationSchema = new mongoose.Schema(
 );
 
 // Index for quick lookups
-resultHashVerificationSchema.index({ examAttempt: 1 });
-resultHashVerificationSchema.index({ exam: 1, student: 1 });
+resultHashVerificationSchema.index({ exam: 1, student: 1 }); // Compound index for exam-student queries
 resultHashVerificationSchema.index({ isTampered: 1 });
 resultHashVerificationSchema.index({ createdAt: -1 });
 

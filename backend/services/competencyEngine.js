@@ -78,7 +78,7 @@ export const getRequiredCompetenciesForRole = async (roleId) => {
 };
 
 const getRequiredForUser = async (user) => {
-  const targetRole = normalizeRoleName(user.targetRole);
+  const targetRole = normalizeRoleName(user.targetRole || user.designation);
   if (!targetRole) return { targetRole: null, role: null, required: [] };
 
   const roles = await Role.find({ isActive: true }).lean();

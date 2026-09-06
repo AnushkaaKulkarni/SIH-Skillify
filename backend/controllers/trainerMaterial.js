@@ -54,8 +54,8 @@ export const uploadMaterial = async (req, res) => {
     let classId = null;
 
     if (sendType === "ALL") {
-      const faculty = await User.findById(req.user._id);
-      studentsList = faculty.students;
+      const allLearners = await User.find({ role: { $in: ["learner", "student"] } }).select("_id").lean();
+      studentsList = allLearners.map(u => u._id);
     } else if (sendType === "SELECTED" && selectedStudents) {
       studentsList = JSON.parse(selectedStudents);
     } else if (sendType === "CLASS" && assignedClass) {
@@ -75,47 +75,77 @@ export const uploadMaterial = async (req, res) => {
     const materials = [];
 
     for (const file of req.files) {
-      const result = await new Promise((resolve, reject) => {
-        const fileNameWithoutExt = file.originalname.split(".")[0];
+      let fileUrl, publicId;
+      
+      // Try Cloudinary upload, fallback to local storage
+      try {
+        const result = await new Promise((resolve, reject) => {
+          const fileNameWithoutExt = file.originalname.split(".")[0];
 
-const stream = cloudinary.uploader.upload_stream(
-  {
-    resource_type: "raw", // IMPORTANT
-    folder: "skillify_materials",
-    use_filename: true,
-    unique_filename: false,
-  },
+          const stream = cloudinary.uploader.upload_stream(
+            {
+              resource_type: "raw", // IMPORTANT
+              folder: "skillify_materials",
+              use_filename: true,
+              unique_filename: false,
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
 
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-
-        stream.end(file.buffer);
-      });
+          stream.end(file.buffer);
+        });
+        
+        fileUrl = result.secure_url;
+        publicId = result.public_id;
+      } catch (cloudinaryError) {
+        console.warn("Cloudinary upload failed, using local storage:", cloudinaryError.message);
+        
+        // Fallback: Create a local file path (for demo purposes)
+        const fs = await import('fs');
+        const path = await import('path');
+        const { v4: uuidv4 } = await import('uuid');
+        
+        const uploadDir = path.join(process.cwd(), 'uploads', 'materials');
+        const fileName = `${uuidv4()}-${file.originalname}`;
+        const filePath = path.join(uploadDir, fileName);
+        
+        // Ensure upload directory exists
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        
+        // Save file locally
+        fs.writeFileSync(filePath, file.buffer);
+        
+        fileUrl = `/uploads/materials/${fileName}`;
+        publicId = fileName;
+      }
 
       const material = await Material.create({
-  title,
-  description,
-  fileName: file.originalname,
-  fileType: file.mimetype,
-  filePath: result.secure_url,   // keep for preview
-  publicId: result.public_id,    // ✅ SAVE STRING ONLY
-  faculty: req.user._id,
-  scope: sendType,
-  students: studentsList,
-  assignedClass: classId,
-  classification: normalizedClassification,
-  classificationScheme,
-  classificationSource,
-  classificationReason,
-  classifiedBy: req.user._id,
-  classifiedAt: new Date(),
-  externalAIAllowed: allowExternalAI,
-  competencies: validCompetencies.map((item) => item._id),
-  processingStatus: "PROCESSING",
-});
+        title,
+        description,
+        fileName: file.originalname,
+        fileType: file.mimetype,
+        filePath: fileUrl,
+        publicId: publicId,
+        faculty: req.user._id,
+        scope: sendType,
+        students: studentsList,
+        assignedClass: classId,
+        classification: normalizedClassification,
+        classificationScheme,
+        classificationSource,
+        classificationReason,
+        classifiedBy: req.user._id,
+        classifiedAt: new Date(),
+        externalAIAllowed: allowExternalAI,
+        competencies: validCompetencies.map((item) => item._id),
+        processingStatus: "PROCESSING",
+      });
+      
       try {
         const extractedText = await extractTextFromUploadedFile(file);
         const chunks = createChunks(extractedText, file.originalname);
@@ -142,7 +172,7 @@ const stream = cloudinary.uploader.upload_stream(
 
 /*
 ==================================
-GET FACULTY MATERIALS
+GET ADMINISTRATOR MATERIALS
 ==================================
 */
 export const getFacultyMaterials = async (req, res) => {
@@ -161,12 +191,12 @@ export const getFacultyMaterials = async (req, res) => {
 
 /*
 ==================================
-GET FACULTY STUDENTS
+GET ADMINISTRATOR OFFICIALS
 ==================================
 */
 export const getFacultyStudents = async (req, res) => {
   try {
-    const faculty = await User.findById(req.user._id)
+    const administrator = await User.findById(req.user._id)
       .populate({
   path: "students",
   select: "fullName email phone studentId parents",
@@ -177,60 +207,60 @@ export const getFacultyStudents = async (req, res) => {
 });
 
 
-    res.json(faculty.students);
+    res.json(administrator.students);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to fetch students" });
+    res.status(500).json({ message: "Failed to fetch government officials" });
   }
 };
 
 /*
 ==================================
-REMOVE STUDENT CONNECTION
+REMOVE OFFICIAL CONNECTION
 ==================================
 */
 export const removeStudentConnection = async (req, res) => {
   try {
-    const { studentId } = req.params;
+    const { studentId } = req.params; // Keep parameter name for route compatibility
 
-    const faculty = await User.findById(req.user._id);
-    const student = await User.findById(studentId);
+    const administrator = await User.findById(req.user._id);
+    const official = await User.findById(studentId);
 
-    if (!student || !["student", "learner"].includes(student.role)) {
-      return res.status(404).json({ message: "Student not found" });
+    if (!official || !["student", "learner"].includes(official.role)) {
+      return res.status(404).json({ message: "Government official not found" });
     }
 
-    // Remove student from faculty
-    faculty.students = faculty.students.filter(
-      (id) => id.toString() !== student._id.toString()
+    // Remove official from administrator
+    administrator.students = administrator.students.filter(
+      (id) => id.toString() !== official._id.toString()
     );
 
-    // Remove faculty from student
-    student.faculties = student.faculties.filter(
-      (id) => id.toString() !== faculty._id.toString()
+    // Remove administrator from official
+    official.faculties = official.faculties.filter(
+      (id) => id.toString() !== administrator._id.toString()
     );
 
-    // Remove student from all parents
-    if (student.parents.length > 0) {
-      const parents = await User.find({ _id: { $in: student.parents } });
+    // Remove official from all parents
+    if (official.parents.length > 0) {
+      const parents = await User.find({ _id: { $in: official.parents } });
 
       for (const parent of parents) {
         parent.children = parent.children.filter(
-          (id) => id.toString() !== student._id.toString()
+          (id) => id.toString() !== official._id.toString()
         );
         await parent.save();
       }
 
-      student.parents = [];
+      official.parents = [];
     }
 
-    await faculty.save();
-    await student.save();
+    await administrator.save();
+    await official.save();
 
-    res.json({ message: "Student connection removed successfully" });
+    res.json({ message: "Government official connection removed successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to remove student" });
+    res.status(500).json({ message: "Failed to remove government official" });
   }
 };
 
@@ -318,7 +348,7 @@ export const saveQuizFromMaterial = async (req, res) => {
       difficulty: difficulty || "medium",
       duration: Number(duration) || 60,
       totalQuestions: questions.length,
-      faculty: req.user._id,
+      faculty: req.user._id, // Administrator uploading material
       status: "DRAFT",
       material: material._id,
       assessmentType: "MATERIAL",

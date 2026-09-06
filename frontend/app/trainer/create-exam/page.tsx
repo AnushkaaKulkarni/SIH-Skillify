@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select'
 import { Upload, Wand2 } from 'lucide-react'
 
-export default function CreateExamPage() {
+function CreateExamContent() {
   const searchParams = useSearchParams()
   const [topic, setTopic] = useState('')
   const [description, setDescription] = useState('')
@@ -913,5 +913,18 @@ const handleAssignStudents = async () => {
   </div>
 )}
     </div>
+  )
+}
+
+export default function CreateExamPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-8 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-2 text-sm text-muted-foreground">Loading assessment builder...</p>
+      </div>
+    }>
+      <CreateExamContent />
+    </Suspense>
   )
 }

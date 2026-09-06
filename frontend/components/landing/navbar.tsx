@@ -40,7 +40,7 @@ export function Navbar() {
                 Log in
               </Button>
             </Link>
-            <Link href="/subscription">
+            <Link href="/role-select">
               <Button className="text-sm font-medium h-10 px-6 rounded-full bg-primary text-white hover:bg-primary/95 shadow-sm transition-all">
                 Get Started
                 <ArrowRight className="w-4 h-4 ml-1" />
@@ -94,9 +94,9 @@ export function Navbar() {
                     Log in
                   </Button>
                 </Link>
-                <Link href="/subscription" onClick={() => setIsMenuOpen(false)}>
+                <Link href="/role-select" onClick={() => setIsMenuOpen(false)}>
                   <Button className="w-full justify-center h-12 rounded-xl bg-primary text-white font-semibold">
-                    Get Started Free
+                    Get Started
                   </Button>
                 </Link>
               </div>

@@ -1,4 +1,4 @@
-import aiGateway from "../ai/gateway/aiGateway.js";
+import aiProvider from "../providers/index.js";
 import { validateGeneratedQuestions } from "./questionValidationService.js";
 
 /* ------------------ helpers ------------------ */
@@ -108,32 +108,42 @@ Rules:
 `;
 
   try {
-    const gatewayResponse = await aiGateway.generateStructured({
-      capability: "quiz_generation",
-      content: prompt,
-      classification,
-      classificationSource,
-      externalAIAllowed,
-      systemPrompt: "You are an educational quiz generator. Generate valid JSON only.",
-      schema: { questions: "array" },
-      maxTokens: 2048,
-      temperature: 0.7,
-      preferredProvider: "auto",
+    const aiResponse = await aiProvider.generateMCQs({
+      subject: safeSubject,
+      materialText: sourceText,
+      questions: safeCount,
+      difficulty: safeDifficulty,
+      competencyIds,
+      targetProficiencyLevel,
+      questionType,
+      sourceReference,
     });
 
-    if (gatewayResponse.success && gatewayResponse.data) {
-      const validated = await validateGeneratedQuestions(gatewayResponse.data.questions || [], { allowedCompetencyIds: competencyIds, defaultCompetencyId: competencyIds[0], defaultLevel: targetProficiencyLevel, sourceReference });
-      if (validated.length > 0) return validated.slice(0, safeCount).map((question) => ({ ...question, id: question.questionId, correct: question.correctAnswer }));
+    if (aiResponse.success && aiResponse.questions) {
+      const validated = await validateGeneratedQuestions(aiResponse.questions, { 
+        allowedCompetencyIds: competencyIds, 
+        defaultCompetencyId: competencyIds[0], 
+        defaultLevel: targetProficiencyLevel, 
+        sourceReference 
+      });
+      
+      if (validated.length > 0) {
+        return validated.slice(0, safeCount).map((question) => ({ 
+          ...question, 
+          id: question.questionId, 
+          correct: question.correctAnswer 
+        }));
+      }
 
       throw new Error("AI provider returned no valid quiz questions.");
     }
 
-    const gatewayError = gatewayResponse.reason || gatewayResponse.error || "AI quiz generation failed.";
-    if (!allowFallback) throw new Error(gatewayError);
-    console.warn("AI Gateway quiz generation failed:", gatewayError);
+    const aiError = aiResponse.error || "AI quiz generation failed.";
+    if (!allowFallback) throw new Error(aiError);
+    console.warn("AI Provider quiz generation failed:", aiError);
   } catch (error) {
     if (!allowFallback) throw error;
-    console.error("AI Gateway error:", error.message);
+    console.error("AI Provider error:", error.message);
   }
 
   if (competencyIds.length) throw new Error("Competency-aware generation failed validation; no draft was saved.");

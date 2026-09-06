@@ -8,7 +8,13 @@ import Competency from "../models/Competency.js";
 import CompetencyDomain from "../models/CompetencyDomain.js";
 import RoleCompetency from "../models/RoleCompetency.js";
 
- dotenv.config();
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const domains = [
   ["Statistical Competencies", "Official statistics and data quality practice."],
@@ -114,14 +120,16 @@ const seed = async () => {
   ];
 
   for (const sample of samples) {
-    await User.findOneAndUpdate(
-      { email: sample.email },
-      { ...sample, password, phone: "0000000000" },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+    let u = await User.findOne({ email: sample.email });
+    if (!u) {
+      u = new User({ ...sample, password, phone: "0000000000" });
+    } else {
+      Object.assign(u, sample, { password, phone: "0000000000" });
+    }
+    await u.save();
   }
 
-  console.log("SIH foundation data seeded");
+  console.log("SIH foundation data seeded successfully");
 };
 
 seed().finally(async () => {

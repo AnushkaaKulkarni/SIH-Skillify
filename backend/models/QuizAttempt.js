@@ -122,5 +122,7 @@ noFaceSince: {
   { timestamps: true }
 );
 
+// Indexes for efficient querying (no duplicates with schema-level indexes)
+quizAttemptSchema.index({ student: 1, createdAt: -1 });
 
 export default mongoose.model("QuizAttempt", quizAttemptSchema);

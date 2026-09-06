@@ -61,7 +61,7 @@ class AIGateway {
    * Check if private provider is available
    */
   async isPrivateProviderAvailable() {
-    const privateProvider = this.getProvider(process.env.AI_PRIVATE_PROVIDER || "lmstudio");
+    const privateProvider = this.getProvider(process.env.AI_PRIVATE_PROVIDER || "ollama");
     if (!privateProvider) return false;
     
     try {
@@ -147,7 +147,7 @@ class AIGateway {
     
     if (processingMode === "private" || request.forcePrivate === true) {
       // Policy requires private processing
-      provider = this.getProvider(process.env.AI_PRIVATE_PROVIDER || "lmstudio");
+      provider = this.getProvider(process.env.AI_PRIVATE_PROVIDER || "ollama");
       
       if (!provider) {
         const latency = Date.now() - startTime;

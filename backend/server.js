@@ -17,6 +17,7 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import aiMentorRoutes from "./routes/aiMentorRoutes.js";
 import aiTutorRoutes from "./routes/aiTutorRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
+import aiHealthRoutes from "./routes/aiHealthRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import interviewRoutes from "./routes/interviewRoutes.js";
 import oralRoutes from "./routes/oralRoutes.js";
@@ -125,6 +126,31 @@ app.get("/", (req, res) => {
   });
 });
 
+// Public health check endpoint (no auth required)
+app.get("/api/health", async (req, res) => {
+  try {
+    const aiProvider = (await import("./providers/index.js")).default;
+    const healthStatus = await aiProvider.getHealthStatus();
+    
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      providers: healthStatus,
+      recommendation: healthStatus.primary.available 
+        ? "System is ready for AI-powered assessments" 
+        : healthStatus.fallback.enabled 
+          ? "Primary provider unavailable, fallback enabled" 
+          : "No AI providers available - please configure Ollama",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Health check failed",
+      error: error.message,
+    });
+  }
+});
+
 app.use("/uploads", express.static("uploads"));
 
 
@@ -137,6 +163,7 @@ app.use("/api/faculty", facultyRoutes);
 // integrations, but the primary SIH flow is canonical learner/trainer/admin.
 app.use("/api/parent", parentRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/ai/health", aiHealthRoutes);
 app.use("/api", examAssignmentRoutes);
 
 app.use("/api/courses", courseRoutes);

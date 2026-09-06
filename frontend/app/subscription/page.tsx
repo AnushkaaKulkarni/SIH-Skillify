@@ -1,93 +1,75 @@
 'use client'
 
 import Link from 'next/link'
-import { SubscriptionPlanType } from '@/contexts/SubscriptionContext'
+import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Check, Sparkles, Crown, Gem, Star } from 'lucide-react'
+import { Check, Sparkles, Shield, Users, Building2 } from 'lucide-react'
 
-const plans = [
+const roles = [
   {
-    id: 'free' as SubscriptionPlanType,
-    name: 'Free',
-    price: '₹0',
-    period: '/month',
-    description: 'Perfect for getting started',
-    icon: Sparkles,
+    id: 'government_official',
+    name: 'Government Official',
+    description: 'Build competencies and skills for India\'s Official Statistical System',
+    icon: Users,
     features: [
-      'Dashboard & Courses',
-      'AI Quiz & AI Mentor',
-      'Full Parent Access'
-    ],
-    color: 'from-gray-500 to-gray-600',
-    buttonText: 'Get Started',
-    buttonVariant: 'outline' as const
-  },
-  {
-    id: 'basic' as SubscriptionPlanType,
-    name: 'Basic',
-    price: '₹300',
-    period: '/month',
-    description: 'Great for individual learners',
-    icon: Crown,
-    features: [
-      'Everything in Free, plus:',
-      'Oral Practice & Code Editor',
-      'AI Notes & AI Tutor'
+      'Competency Assessment & Diagnostics',
+      'Personalized Learning Paths',
+      'AI-Generated Assessments',
+      'Skill Gap Analysis',
+      'Training Recommendations'
     ],
     color: 'from-blue-500 to-blue-600',
-    buttonText: 'Enroll Now',
-    buttonVariant: 'default' as const
+    buttonText: 'Get Started',
+    route: '/register?role=learner'
   },
   {
-    id: 'pro' as SubscriptionPlanType,
-    name: 'Pro',
-    price: '₹600',
-    period: '/month',
-    description: 'Best for serious students',
-    icon: Gem,
+    id: 'administrator',
+    name: 'Administrator',
+    description: 'Manage workforce competency and training programs',
+    icon: Shield,
     features: [
-      'Everything in Basic, plus:',
-      'Materials & Grievances',
-      'Interview Preparation',
-      'Full Faculty Access'
+      'Workforce Analytics',
+      'Upload Learning Materials',
+      'Generate AI Assessments',
+      'Track Official Progress',
+      'Competency Gap Management'
     ],
     color: 'from-purple-500 to-purple-600',
-    buttonText: 'Enroll Now',
-    buttonVariant: 'default' as const,
+    buttonText: 'Get Started',
+    route: '/register?role=trainer',
     popular: true
   },
   {
-    id: 'pro-plus' as SubscriptionPlanType,
-    name: 'Pro Plus',
-    price: '₹1000',
-    period: '/month',
-    description: 'Complete learning solution',
-    icon: Star,
+    id: 'organization',
+    name: 'Organization View',
+    description: 'Department-wide competency intelligence and planning',
+    icon: Building2,
     features: [
-      'Everything in Pro, plus:',
-      'Advanced Exam System',
-      'Automated MarkSheets',
-      'Full Admin Access'
+      'Department Analytics',
+      'Role-Based Competency Mapping',
+      'Training Program Management',
+      'Workforce Planning',
+      'Strategic Skill Development'
     ],
     color: 'from-orange-500 to-orange-600',
-    buttonText: 'Enroll Now',
-    buttonVariant: 'default' as const
+    buttonText: 'Get Started',
+    route: '/register?role=admin'
   }
 ]
 
 export default function SubscriptionPage() {
-  const handlePlanSelect = (planId: SubscriptionPlanType) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('selectedPlan', planId)
-    }
+  const router = useRouter()
+
+  const handleRoleSelect = (route: string) => {
+    router.push(route)
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 flex flex-col justify-center overflow-hidden">
-      <div className="container mx-auto px-4 py-4 max-w-7xl">
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 flex flex-col justify-center overflow-hidden">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
-        <div className="text-center space-y-2 mb-4">
+        <div className="text-center space-y-4 mb-8">
           <Link href="/" className="inline-flex items-center justify-center gap-2 font-bold text-2xl group">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary shadow-sm hover:scale-105 transition-transform duration-300">
               <Sparkles className="w-5 h-5 text-white" />
@@ -95,56 +77,50 @@ export default function SubscriptionPage() {
             <span className="text-gray-900 tracking-tight">Skillify<span className="text-primary">AI</span></span>
           </Link>
           <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">
-            Choose Your Learning Journey
+            Choose Your Role
           </h1>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            Select the perfect plan that fits your learning needs and unlock powerful AI-powered educational features.
+            Select your role to access the AI-powered competency intelligence platform for India's Official Statistical System.
           </p>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 items-stretch">
-          {plans.map((plan) => {
-            const Icon = plan.icon
+        {/* Role Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 items-stretch">
+          {roles.map((role) => {
+            const Icon = role.icon
             return (
-              <Card key={plan.id} className={`relative flex flex-col p-6 transition-all duration-300 rounded-3xl bg-white ${
-                plan.popular 
+              <Card key={role.id} className={`relative flex flex-col p-6 transition-all duration-300 rounded-3xl bg-white ${
+                role.popular 
                   ? 'border-indigo-200 shadow-xl ring-2 ring-indigo-50 z-10 scale-105' 
                   : 'border-gray-200 shadow-sm hover:shadow-md'
               }`}>
-                {plan.popular && (
+                {role.popular && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                     <div className="bg-primary text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-md">
-                      Most Popular
+                      Most Common
                     </div>
                   </div>
                 )}
 
                 <div className="flex-grow space-y-4 mt-2">
-                  {/* Plan Header */}
+                  {/* Role Header */}
                   <div className="text-center space-y-2">
-                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${plan.color} flex items-center justify-center mx-auto shadow-sm`}>
+                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${role.color} flex items-center justify-center mx-auto shadow-sm`}>
                       <Icon className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-                      <p className="text-xs text-gray-500 mt-1">{plan.description}</p>
-                    </div>
-                    <div className="pt-2">
-                      <div className="flex items-baseline justify-center gap-1">
-                        <span className="text-3xl font-extrabold text-gray-900">{plan.price}</span>
-                        <span className="text-sm font-medium text-gray-500">{plan.period}</span>
-                      </div>
+                      <h3 className="text-xl font-bold text-gray-900">{role.name}</h3>
+                      <p className="text-xs text-gray-500 mt-1">{role.description}</p>
                     </div>
                   </div>
 
                   {/* Features */}
                   <div className="space-y-3 pt-3 border-t border-gray-100">
                     <ul className="space-y-3">
-                      {plan.features.map((feature, idx) => (
+                      {role.features.map((feature, idx) => (
                         <li key={idx} className="flex items-start gap-2">
                           <Check className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" />
-                          <span className={`text-sm ${feature.includes('Everything in') ? 'font-semibold text-gray-900' : 'text-gray-600 font-medium'}`}>
+                          <span className="text-sm text-gray-600 font-medium">
                             {feature}
                           </span>
                         </li>
@@ -153,21 +129,19 @@ export default function SubscriptionPage() {
                   </div>
                 </div>
 
-                {/* CTA Button placed perfectly at bottom */}
+                {/* CTA Button */}
                 <div className="mt-4 pt-4 mt-auto border-t border-gray-50">
-                  <Link href={`/role-select?plan=${plan.id}`} className="block w-full">
-                    <Button 
-                      className={`w-full h-10 rounded-xl text-sm font-semibold shadow-sm transition-all ${
-                        plan.buttonVariant === 'default' 
-                          ? 'bg-primary text-white hover:bg-primary/90 hover:shadow-md' 
-                          : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
-                      }`}
-                      variant={plan.buttonVariant as any} // Ignore type mismatch to use custom classes fully
-                      onClick={() => handlePlanSelect(plan.id)}
-                    >
-                      {plan.buttonText}
-                    </Button>
-                  </Link>
+                  <Button 
+                    className={`w-full h-10 rounded-xl text-sm font-semibold shadow-sm transition-all ${
+                      role.popular 
+                        ? 'bg-primary text-white hover:bg-primary/90 hover:shadow-md' 
+                        : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                    variant={role.popular ? 'default' : 'outline'}
+                    onClick={() => handleRoleSelect(role.route)}
+                  >
+                    {role.buttonText}
+                  </Button>
                 </div>
               </Card>
             )
@@ -175,22 +149,22 @@ export default function SubscriptionPage() {
         </div>
 
         {/* Footer info */}
-        <div className="text-center space-y-2 mt-4">
-          <p className="text-[10px] text-gray-500 font-medium max-w-2xl mx-auto">
-            All plans include core platform features. You can upgrade or downgrade your plan at any time.
+        <div className="text-center space-y-2">
+          <p className="text-xs text-gray-500 font-medium max-w-2xl mx-auto">
+            SkillifyAI provides competency intelligence, diagnostic assessment, and AI-powered learning pathways for India's Official Statistical System.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 text-[10px] text-gray-600 font-medium">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 text-xs text-gray-600 font-medium">
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-500" />
-              <span>30-day money-back guarantee</span>
+              <span>AI-Powered Assessments</span>
             </div>
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-500" />
-              <span>Cancel anytime</span>
+              <span>Competency-Based Learning</span>
             </div>
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-500" />
-              <span>24/7 dedicated support</span>
+              <span>Government-Focused</span>
             </div>
           </div>
         </div>

@@ -93,23 +93,12 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     return role === 'parent' ? 'learner' : role
   }
 
-  const hasFeature = (feature: string, role: ApplicationRole): boolean => {
-    // Profile and Notifications are always available for all logged-in users
-    if (feature === 'Profile' || feature === 'Notifications') {
-      return true
-    }
-    
-    const plan = subscriptionPlans[currentPlan]
-    return plan.features[normalizeRole(role)].some(planFeature =>
-      planFeature.toLowerCase() === feature.toLowerCase() || 
-      feature.toLowerCase().includes(planFeature.toLowerCase()) ||
-      planFeature.toLowerCase().includes(feature.toLowerCase())
-    )
+  const hasFeature = (_feature: string, _role: ApplicationRole): boolean => {
+    return true
   }
 
-  const canAccessRole = (role: ApplicationRole): boolean => {
-    const plan = subscriptionPlans[currentPlan]
-    return plan.features[normalizeRole(role)].length > 0
+  const canAccessRole = (_role: ApplicationRole): boolean => {
+    return true
   }
 
   const getRequiredPlanForFeature = (feature: string, role: ApplicationRole): SubscriptionPlanType | null => {

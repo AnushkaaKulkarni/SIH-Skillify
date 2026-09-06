@@ -4,7 +4,10 @@ import cloudinary from "../config/cloudinary.js";
 
 export const getStudentMaterials = async (req, res) => {
   const materials = await Material.find({
-    students: req.user._id,
+    $or: [
+      { scope: "ALL" },
+      { students: req.user._id },
+    ],
   }).populate("faculty", "fullName");
 
   res.json(materials);
@@ -18,9 +21,11 @@ export const downloadStudentMaterial = async (req, res) => {
       return res.status(404).json({ message: "Material not found" });
     }
 
-    const allowed = material.students.some(
-      (id) => id.toString() === req.user._id.toString()
-    );
+    const allowed =
+      material.scope === "ALL" ||
+      material.students.some(
+        (id) => id.toString() === req.user._id.toString()
+      );
 
     if (!allowed) {
       return res.status(403).json({ message: "Not authorized" });

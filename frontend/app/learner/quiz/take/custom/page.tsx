@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -98,7 +98,7 @@ function CameraPreview({
 
 /* ================= QUIZ PAGE ================= */
 
-export default function QuizTakePage() {
+function QuizTakeContent() {
   const router = useRouter()
   const params = useSearchParams()
 
@@ -534,5 +534,18 @@ useEffect(() => {
 
       <CameraPreview active={!!attemptId} onFrame={handleFaceFrame} />
     </div>
+  )
+}
+
+export default function QuizTakePage() {
+  return (
+    <Suspense fallback={
+      <div className="p-8 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-2 text-sm text-muted-foreground">Loading assessment...</p>
+      </div>
+    }>
+      <QuizTakeContent />
+    </Suspense>
   )
 }

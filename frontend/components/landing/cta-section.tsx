@@ -23,7 +23,6 @@ export function CTASection() {
 
   return (
     <section className="py-24 md:py-32 bg-white relative overflow-hidden">
-      <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.015] mix-blend-overlay"></div>
       
       {/* Background accents */}
       <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
@@ -75,14 +74,14 @@ export function CTASection() {
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
-                <Link href="/subscription">
+                <Link href="/role-select">
                   <Button size="lg" className="w-full sm:w-auto h-14 px-8 rounded-xl bg-primary text-white hover:bg-primary/90 shadow-lg hover:shadow-primary/25 transition-all text-base font-medium">
-                    Start Free Trial
+                    Get Started
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
                 <Button variant="outline" size="lg" className="w-full sm:w-auto h-14 px-8 rounded-xl bg-white border-gray-200 hover:bg-gray-50 text-gray-700 transition-all text-base font-medium">
-                  Schedule Demo
+                  Learn More
                 </Button>
               </div>
             </div>
@@ -101,7 +100,7 @@ export function CTASection() {
                   </div>
                 ))}
               </div>
-              <span>50,000+ Happy Students</span>
+              <span>50,000+ Active Government Officials</span>
             </div>
             <div className="hidden md:block w-1.5 h-1.5 rounded-full bg-gray-300"></div>
             <div className="flex items-center gap-2 text-yellow-500">

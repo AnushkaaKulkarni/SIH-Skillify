@@ -4,21 +4,23 @@ import ExamAttempt from "../models/ExamAttempt.js";
 import QuizAttempt from "../models/QuizAttempt.js";
 import Recommendation from "../models/Recommendation.js";
 import TrainingHistory from "../models/TrainingHistory.js";
+import Exam from "../models/Exam.js";
 import { getLearnerCompetencyOverview } from "../services/competencyEngine.js";
 
 export const getStudentDashboard = async (req, res) => {
+  // Government Official / Learner Dashboard
   try {
-    const studentId = req.user._id;
+    const learnerId = req.user._id;
 
     /* ================= EXAM & QUIZ ATTEMPTS ================= */
     // Fetch both formal exams and practice quizzes
     const examAttemptsData = await ExamAttempt.find({
-      student: studentId,
+      student: learnerId,
       score: { $exists: true, $ne: null }
     }).populate("exam", "title subject");
 
     const quizAttemptsData = await QuizAttempt.find({
-      student: studentId,
+      student: learnerId,
       isFinalized: true
     });
 
@@ -31,11 +33,11 @@ export const getStudentDashboard = async (req, res) => {
           { scope: "SELECTED", assignedStudents: req.user._id },
         ],
       }).select("_id title subject scheduledAt totalQuestions status"),
-      Recommendation.find({ user: studentId })
+      Recommendation.find({ user: learnerId })
         .populate("competency", "name code")
         .sort({ createdAt: -1 })
         .lean(),
-      TrainingHistory.find({ user: studentId })
+      TrainingHistory.find({ user: learnerId })
         .populate("competency", "name code")
         .sort({ createdAt: -1 })
         .lean(),
@@ -77,7 +79,7 @@ export const getStudentDashboard = async (req, res) => {
 
     /* ================= INTERVIEWS ================= */
     const interviews = await InterviewSession.find({
-      student: studentId,
+      student: learnerId,
       status: "completed",
     }).sort({ createdAt: -1 });
 
@@ -98,7 +100,7 @@ export const getStudentDashboard = async (req, res) => {
 
     /* ================= FACULTY ORALS ================= */
     const facultyOrals = await FacultyOralAttempt.find({
-      student: studentId,
+      student: learnerId,
       status: "completed",
     }).sort({ createdAt: -1 });
 
@@ -209,6 +211,7 @@ export const getStudentDashboard = async (req, res) => {
         previousTraining: req.user.previousTraining || [],
         targetRole: req.user.targetRole,
       },
+      role: "government_official", // Add role identifier for frontend
       competencyOverview,
       scheduledAssessments,
       recommendations,

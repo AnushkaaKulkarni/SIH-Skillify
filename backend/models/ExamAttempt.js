@@ -51,4 +51,7 @@ const examAttemptSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Compound index for exam-student uniqueness (removes duplicate index warning)
+examAttemptSchema.index({ exam: 1, student: 1 }, { unique: true });
+
 export default mongoose.model("ExamAttempt", examAttemptSchema);

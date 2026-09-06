@@ -78,7 +78,6 @@ const blockchainRecordSchema = new mongoose.Schema(
 );
 
 // Indexes for efficient querying
-blockchainRecordSchema.index({ examAttempt: 1 });
 blockchainRecordSchema.index({ transactionHash: 1 });
 blockchainRecordSchema.index({ resultHash: 1 });
 blockchainRecordSchema.index({ tamperDetected: 1 });

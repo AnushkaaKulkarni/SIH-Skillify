@@ -9,12 +9,13 @@ export const authorizeRoles = (...roles) => {
     const requestedRoles = new Set(roles);
     const currentRole = req.user?.role;
 
-    if (!requestedRoles.has(currentRole) && !requestedRoles.has(roleAliases[currentRole])) {
-      return res.status(403).json({
-        message: "Access denied: insufficient permissions",
-      });
+    if (currentRole === "admin" || requestedRoles.has(currentRole) || requestedRoles.has(roleAliases[currentRole])) {
+      return next();
     }
-    next();
+
+    return res.status(403).json({
+      message: "Access denied: insufficient permissions",
+    });
   };
 };
 

@@ -22,15 +22,15 @@ export function HeroSection() {
               {/* Badge */}
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card text-primary text-sm font-medium">
                 <Star className="w-4 h-4 text-yellow-500" />
-                <span>Next-Generation AI Platform</span>
+                <span>India's Official Statistical System Capacity Building</span>
               </div>
               
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-foreground leading-[1.1] tracking-tight">
-                Transform Your <br />
-                <span className="gradient-text">Learning Journey</span>
+                AI Competency <br />
+                <span className="gradient-text">Intelligence Platform</span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-lg leading-relaxed">
-                Experience the future of education with AI-powered proctoring, personalized quizzes, and intelligent recommendations tailored for your success.
+                Diagnose skill gaps, receive personalized iGOT Karmayogi recommendations, and complete AI-generated assessments from official learning materials.
               </p>
             </div>
 
@@ -40,27 +40,27 @@ export function HeroSection() {
                 <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
                   <Brain className="w-6 h-6 text-primary" />
                 </div>
-                <span className="text-foreground font-medium text-lg">AI Proctored Exams</span>
+                <span className="text-foreground font-medium text-lg">FRAC Competency Framework</span>
               </div>
               <div className="flex items-center gap-4 group">
                 <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
                   <Zap className="w-6 h-6 text-blue-600" />
                 </div>
-                <span className="text-foreground font-medium text-lg">Smart Recommendations</span>
+                <span className="text-foreground font-medium text-lg">Local Qwen RAG Quiz Engine</span>
               </div>
               <div className="flex items-center gap-4 group">
                 <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
                   <TrendingUp className="w-6 h-6 text-teal-600" />
                 </div>
-                <span className="text-foreground font-medium text-lg">Real-time Analytics</span>
+                <span className="text-foreground font-medium text-lg">iGOT Ecosystem Alignment</span>
               </div>
             </div>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Link href="/subscription">
+              <Link href="/role-select">
                 <Button size="lg" className="w-full sm:w-auto text-base h-14 px-8 rounded-xl bg-primary text-white hover:bg-primary/90 shadow-lg hover:shadow-primary/25 transition-all">
-                  Get Started Free
+                  Get Started
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
@@ -82,7 +82,7 @@ export function HeroSection() {
                   <div className="grid grid-cols-2 gap-4 mb-6">
                     <div className="bg-white/80 rounded-xl p-4 border border-gray-100 shadow-sm">
                       <p className="text-2xl font-bold text-gray-900">50k+</p>
-                      <p className="text-sm text-gray-500 font-medium">Active Students</p>
+                      <p className="text-sm text-gray-500 font-medium">Active Officials</p>
                     </div>
                     <div className="bg-white/80 rounded-xl p-4 border border-gray-100 shadow-sm">
                       <p className="text-2xl font-bold text-gray-900">95%</p>
@@ -94,7 +94,7 @@ export function HeroSection() {
                   <div className="relative overflow-hidden rounded-[1.5rem] border border-gray-100/50 shadow-sm">
                     <img 
                       src="/hero-section-image.png" 
-                      alt="Students studying with SkillifyAI"
+                      alt="Officials learning with SkillifyAI"
                       className="h-[300px] w-full object-cover transform hover:scale-105 transition-transform duration-700 ease-out"
                     />
                   </div>
