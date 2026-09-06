@@ -145,7 +145,7 @@ class AIGateway {
     const processingMode = policyDecision.processingMode;
     let provider;
     
-    if (processingMode === "private") {
+    if (processingMode === "private" || request.forcePrivate === true) {
       // Policy requires private processing
       provider = this.getProvider(process.env.AI_PRIVATE_PROVIDER || "lmstudio");
       

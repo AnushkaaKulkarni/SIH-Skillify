@@ -116,8 +116,14 @@ export const updateExamQuestion = async (req, res) => {
     const q = exam.questions.find((q) => q.questionId === questionId);
     if (!q) return res.sendStatus(404);
 
-    if (question) q.question = question;
-    if (options) q.options = options;
+    if (question) {
+      q.revisionHistory.push({ question: q.question, changedAt: new Date(), changedBy: req.user._id });
+      q.question = question;
+    }
+    if (options) {
+      if (!Array.isArray(options) || options.length !== 4 || options.some((option) => !String(option).trim()) || new Set(options.map((option) => String(option).trim().toLowerCase())).size !== 4) return res.status(400).json({ message: "Exactly four unique non-empty options are required." });
+      q.options = options;
+    }
     if (correctAnswer !== undefined) q.correctAnswer = Number(correctAnswer);
     if (competency !== undefined) {
       if (!competency) {
@@ -190,6 +196,8 @@ export const approveExam = async (req, res) => {
     }
 
     exam.status = "APPROVED";
+    exam.approvedBy = req.user._id;
+    exam.approvedAt = new Date();
     await exam.save();
 
     res.json({ success: true, status: exam.status });

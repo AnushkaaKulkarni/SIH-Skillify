@@ -156,8 +156,19 @@ router.post(
   protect,
   authorizeRoles("trainer", "faculty"),
   saveQuizFromMaterial
-      const faculty = await User.findById(facultyId).populate("students");
+);
 
+router.get(
+  "/dashboard",
+  protect,
+  authorizeRoles("trainer", "faculty"),
+  async (req, res) => {
+    try {
+      const facultyId = req.user._id; // ✅ correct
+
+      /* 1️⃣ TOTAL STUDENTS */
+      const faculty = await User.findById(facultyId).populate("students");
+      const totalStudents = faculty?.students?.length || 0;
       const learnerProgress = await Promise.all((faculty?.students || []).map(async (student) => {
         const [latestAttempt, overview] = await Promise.all([
           ExamAttempt.findOne({ student: student._id, status: { $in: ["SUBMITTED", "AUTO_SUBMITTED"] } })
@@ -180,17 +191,6 @@ router.post(
           openGaps: competencies.filter((item) => item.gap?.status === "open").length,
         };
       }));
-router.get(
-  "/dashboard",
-  protect,
-  authorizeRoles("trainer", "faculty"),
-  async (req, res) => {
-    try {
-      const facultyId = req.user._id; // ✅ correct
-
-      /* 1️⃣ TOTAL STUDENTS */
-      const faculty = await User.findById(facultyId).populate("students");
-      const totalStudents = faculty?.students?.length || 0;
 
       /* 2️⃣ TOTAL EXAMS */
       const totalExams = await Exam.countDocuments({
@@ -220,7 +220,6 @@ const recentExams = await Promise.all(
 );
       /* 5️⃣ SUBJECT PERFORMANCE */
       const subjectPerformance = await Exam.aggregate([
-        learnerProgress,
         { $match: { faculty: facultyId } },
         {
           $group: {
@@ -252,6 +251,7 @@ const recentExams = await Promise.all(
   avgPassRate,
   recentExams,
   subjectPerformance,
+  learnerProgress,
 });
     } catch (error) {
       console.error("Faculty dashboard error:", error);
@@ -374,6 +374,15 @@ router.post(
   "/generate-quiz-from-material",
   protect,
   authorizeRoles("trainer", "faculty"),
+  generateQuizFromMaterial
+);
+
+// Canonical material-scoped generation endpoint used by the SIH trainer flow.
+router.post(
+  "/materials/:materialId/generate-assessment",
+  protect,
+  authorizeRoles("trainer", "faculty"),
+  (req, _res, next) => { req.body.materialId = req.params.materialId; next(); },
   generateQuizFromMaterial
 );
 

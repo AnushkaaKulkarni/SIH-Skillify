@@ -1,4 +1,5 @@
 import aiGateway from "../ai/gateway/aiGateway.js";
+import { validateGeneratedQuestions } from "./questionValidationService.js";
 
 /* ------------------ helpers ------------------ */
 
@@ -64,6 +65,10 @@ export const generateQuizQuestions = async ({
   classificationSource = "MOSPI_GSDD_2026",
   externalAIAllowed = true,
   allowFallback = true,
+  competencyIds = [],
+  targetProficiencyLevel = 3,
+  questionType = "knowledge",
+  sourceReference = "",
 }) => {
   const safeCount = Math.max(1, toNumber(questions, 10));
   const safeDifficulty = String(difficulty || "mixed").toLowerCase();
@@ -71,19 +76,20 @@ export const generateQuizQuestions = async ({
 
   const sourceText = String(materialText || subject).slice(0, 30000);
   const prompt = `
-Generate ${safeCount} multiple-choice questions strictly based on:
+Generate ${safeCount} competency-aware multiple-choice questions strictly based on:
 "${safeSubject}"
 
 Source material:
 ${sourceText}
 
-Difficulty: ${safeDifficulty}
+Difficulty: ${safeDifficulty}; target proficiency level: ${targetProficiencyLevel}; type: ${questionType}.
+Allowed competency IDs: ${competencyIds.map(String).join(", ")}
 
 Rules:
 - Questions must ONLY belong to the given subject/topic
 - 4 options exactly
 - One correct answer
-  - Include a brief explanation and difficulty for each question
+  - Include a brief explanation, competencyId, targetProficiencyLevel, difficulty, questionType and sourceReference for each question
 - No extra text
 - Output ONLY valid JSON in the format below
 
@@ -95,7 +101,7 @@ Rules:
       "options": ["", "", "", ""],
         "correct": 0,
         "explanation": "",
-        "difficulty": "medium"
+        "difficulty": "medium", "competencyId": "", "targetProficiencyLevel": 3, "questionType": "knowledge", "sourceReference": ""
     }
   ]
 }
@@ -116,10 +122,8 @@ Rules:
     });
 
     if (gatewayResponse.success && gatewayResponse.data) {
-      const parsed = normalizeQuestionSet(gatewayResponse.data.questions || []);
-      if (parsed.length > 0) {
-        return parsed.slice(0, safeCount);
-      }
+      const validated = await validateGeneratedQuestions(gatewayResponse.data.questions || [], { allowedCompetencyIds: competencyIds, defaultCompetencyId: competencyIds[0], defaultLevel: targetProficiencyLevel, sourceReference });
+      if (validated.length > 0) return validated.slice(0, safeCount).map((question) => ({ ...question, id: question.questionId, correct: question.correctAnswer }));
 
       throw new Error("AI provider returned no valid quiz questions.");
     }
@@ -132,7 +136,8 @@ Rules:
     console.error("AI Gateway error:", error.message);
   }
 
-  // absolute last safety net
+  if (competencyIds.length) throw new Error("Competency-aware generation failed validation; no draft was saved.");
+  // absolute last safety net for legacy generic quizzes only
   console.warn("Using generic fallback questions");
   return genericFallback(safeCount);
 };

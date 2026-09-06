@@ -7,12 +7,12 @@ import {
 } from "./competencyEngine.js";
 
 test("scoreToLevel uses the prototype 0-100 scale", () => {
-  assert.equal(scoreToLevel(0), 0);
-  assert.equal(scoreToLevel(20), 1);
+  assert.equal(scoreToLevel(0), 1);
+  assert.equal(scoreToLevel(39), 1);
   assert.equal(scoreToLevel(40), 2);
-  assert.equal(scoreToLevel(60), 3);
-  assert.equal(scoreToLevel(75), 4);
-  assert.equal(scoreToLevel(90), 5);
+  assert.equal(scoreToLevel(55), 3);
+  assert.equal(scoreToLevel(70), 4);
+  assert.equal(scoreToLevel(85), 5);
 });
 
 test("calculateSkillGap classifies open and addressed gaps", () => {

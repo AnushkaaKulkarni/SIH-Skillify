@@ -7,6 +7,8 @@ import {
   getSavedNotes, 
   getAINoteById 
 } from "../controllers/aiController.js";
+import { getAIHealth } from "../controllers/aiHealthController.js";
+import { createDiagnostic } from "../controllers/diagnosticController.js";
 
 const router = express.Router();
 
@@ -18,5 +20,7 @@ router.get("/download/:noteId/pdf", protect, downloadAINotePDF);
 router.get("/test", (req, res) => {
   res.json({ message: "AI routes are working!" });
 });
+router.get("/health", protect, getAIHealth);
+router.post("/diagnostics", protect, createDiagnostic);
 
 export default router;

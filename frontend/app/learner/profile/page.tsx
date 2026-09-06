@@ -7,11 +7,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useRouter } from "next/navigation";
 
 export default function LearnerProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<any>(null);
   const [competencyOverview, setCompetencyOverview] = useState<any>(null);
+  const [creatingDiagnostic, setCreatingDiagnostic] = useState(false);
+  const router = useRouter();
+
+  const startDiagnostic = async () => {
+    setCreatingDiagnostic(true);
+    try {
+      const response = await API.post("/ai/diagnostics", { questionCount: 10 });
+      router.push(`/learner/quiz/take/${response.data.examId}`);
+    } catch (error: any) {
+      alert(error.response?.data?.message || "The local diagnostic provider is unavailable.");
+    } finally { setCreatingDiagnostic(false); }
+  };
 
   useEffect(() => {
     fetchProfile();
@@ -225,6 +238,10 @@ export default function LearnerProfile() {
         <p className="text-sm text-gray-600 mt-1">
           Target role: {competencyOverview?.targetRole || formData.targetRole || "Not configured"}
         </p>
+      </div>
+      <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-indigo-950">Complete the local-AI diagnostic to establish evidence-based competency scores. Self-declared profile information is not scored.</p>
+        <Button onClick={startDiagnostic} disabled={creatingDiagnostic}>{creatingDiagnostic ? "Preparing…" : "Start diagnostic"}</Button>
       </div>
       {!competencyOverview?.competencies?.length ? (
         <p className="text-sm text-gray-600">No official role competency mapping is configured yet.</p>

@@ -92,6 +92,23 @@ const materialSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    // Kept in MongoDB for a hackathon-scale RAG implementation. A dedicated
+    // vector store can replace this without changing the assessment API.
+    processingStatus: {
+      type: String,
+      enum: ["UPLOADING", "PROCESSING", "READY", "FAILED"],
+      default: "UPLOADING",
+    },
+    processingError: { type: String, default: "" },
+    extractedText: { type: String, default: "" },
+    chunks: [{
+      index: Number,
+      text: String,
+      sourceReference: String,
+      keywords: [String],
+    }],
+    competencies: [{ type: mongoose.Schema.Types.ObjectId, ref: "Competency" }],
   },
   { timestamps: true }
 );

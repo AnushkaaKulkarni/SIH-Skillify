@@ -6,6 +6,7 @@ import User from "../models/User.js";
 import Role from "../models/Role.js";
 import Competency from "../models/Competency.js";
 import CompetencyDomain from "../models/CompetencyDomain.js";
+import RoleCompetency from "../models/RoleCompetency.js";
 
  dotenv.config();
 
@@ -19,6 +20,7 @@ const domains = [
 const competencies = [
   ["Survey Design", "STAT_SURVEY_DESIGN", "Statistical Competencies"],
   ["Sampling", "STAT_SAMPLING", "Statistical Competencies"],
+  ["Statistical Methods", "STAT_STATISTICAL_METHODS", "Statistical Competencies"],
   ["National Accounts", "STAT_NATIONAL_ACCOUNTS", "Statistical Competencies"],
   ["Price Statistics", "STAT_PRICE_STATISTICS", "Statistical Competencies"],
   ["Labour Statistics", "STAT_LABOUR_STATISTICS", "Statistical Competencies"],
@@ -52,6 +54,15 @@ const competencies = [
   ["Change Management", "BEH_CHANGE_MANAGEMENT", "Behavioural and Managerial"],
 ];
 
+// Representative prototype competency mapping aligned with FRAC principles;
+// it is intentionally not represented as an official FRAC source.
+const roleMappings = {
+  "Statistical Officer": [["STAT_SURVEY_DESIGN", 4, .95], ["STAT_SAMPLING", 4, .95], ["STAT_DATA_QUALITY", 4, .9], ["STAT_METADATA_STANDARDS", 3, .75], ["TECH_PYTHON", 3, .7], ["TECH_SQL", 3, .7], ["TECH_DATA_VISUALIZATION", 3, .65], ["GOV_DATA_PRIVACY", 2, .6], ["BEH_COMMUNICATION", 3, .6], ["BEH_DECISION_MAKING", 3, .6]],
+  "Statistical Analyst": [["STAT_STATISTICAL_METHODS", 4, .95], ["STAT_DATA_QUALITY", 4, .9], ["TECH_PYTHON", 4, .9], ["TECH_R", 3, .75], ["TECH_SQL", 4, .85], ["TECH_DATA_VISUALIZATION", 4, .8], ["TECH_AI_ML", 3, .65], ["BEH_COMMUNICATION", 3, .55]],
+  "Survey / Field Statistics Officer": [["STAT_SURVEY_DESIGN", 4, .95], ["STAT_SAMPLING", 4, .95], ["STAT_DATA_QUALITY", 4, .9], ["STAT_METADATA_STANDARDS", 3, .7], ["GOV_DATA_PRIVACY", 3, .7], ["TECH_GIS", 3, .65], ["BEH_COMMUNICATION", 4, .75], ["BEH_ETHICS", 3, .6]],
+  "Statistical Programmer / Data Systems Officer": [["TECH_PYTHON", 4, .95], ["TECH_R", 3, .7], ["TECH_SQL", 4, .95], ["TECH_APIS", 4, .85], ["TECH_CLOUD", 3, .7], ["TECH_OPEN_DATA", 3, .65], ["GOV_CYBERSECURITY", 3, .75], ["GOV_DATA_PRIVACY", 3, .75], ["STAT_DATA_QUALITY", 3, .65]],
+};
+
 const seed = async () => {
   await connectDB();
 
@@ -73,7 +84,8 @@ const seed = async () => {
     );
   }
 
-  for (const name of ["Statistical Officer", "Data Analyst", "Training Officer", "Administrator"]) {
+  const competencyByCode = new Map((await Competency.find().select("_id code").lean()).map((item) => [item.code, item]));
+  for (const name of Object.keys(roleMappings)) {
     await Role.findOneAndUpdate(
       { name },
       { name },
@@ -81,10 +93,23 @@ const seed = async () => {
     );
   }
 
+  for (const [roleName, mappings] of Object.entries(roleMappings)) {
+    const role = await Role.findOne({ name: roleName });
+    for (const [code, requiredLevel, importanceWeight] of mappings) {
+      const competency = competencyByCode.get(code);
+      if (!competency) continue;
+      await RoleCompetency.findOneAndUpdate(
+        { role: role._id, competency: competency._id },
+        { role: role._id, competency: competency._id, requiredLevel, importanceWeight, isMandatory: true, rationale: "Representative prototype competency mapping aligned with FRAC principles." },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    }
+  }
+
   const password = await bcrypt.hash("ChangeMe123!", 10);
   const samples = [
-    { fullName: "Sample Learner", email: "learner@example.gov.in", role: "learner", officialId: "SAMPLE-OFFICIAL-001", designation: "Statistical Officer" },
-    { fullName: "Sample Trainer", email: "trainer@example.gov.in", role: "trainer", employeeId: "SAMPLE-TRAINER-001", designation: "Training Officer" },
+    { fullName: "Sample Learner", email: "learner@example.gov.in", role: "learner", officialId: "SAMPLE-OFFICIAL-001", designation: "Statistical Officer", targetRole: "Statistical Officer", organization: "Ministry of Statistics and Programme Implementation (MoSPI)" },
+    { fullName: "Sample Trainer", email: "trainer@example.gov.in", role: "trainer", employeeId: "SAMPLE-TRAINER-001", designation: "Trainer" },
     { fullName: "Sample Administrator", email: "admin@example.gov.in", role: "admin", employeeId: "SAMPLE-ADMIN-001", designation: "Administrator" },
   ];
 

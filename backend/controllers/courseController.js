@@ -1,5 +1,16 @@
 import axios from "axios";
 import Course from "../models/Course.js";
+import { getLearnerCompetencyOverview } from "../services/competencyEngine.js";
+import { discoverCourses } from "../services/courseDiscoveryService.js";
+
+export const getPersonalizedRecommendations = async (req, res) => {
+  try {
+    const overview = await getLearnerCompetencyOverview(req.user);
+    const open = (overview.competencies || []).filter((item) => item.gap?.status === "open").sort((a, b) => (b.gap?.gap || 0) - (a.gap?.gap || 0)).slice(0, 3);
+    const recommendations = await Promise.all(open.map(async (item) => ({ competency: item.competency.name, currentLevel: item.current?.currentLevel || 0, requiredLevel: item.requiredLevel, why: `${item.competency.name} is ${item.gap.gap} level(s) below the requirement for ${overview.targetRole}.`, ...(await discoverCourses({ competency: item.competency.name, role: overview.targetRole, gap: item.gap.gap })) })));
+    res.json({ integrationStatus: "Prototype integration layer — live iGOT/NSSTA access is not configured.", recommendations });
+  } catch (error) { res.status(500).json({ message: "Unable to build recommendations." }); }
+};
 
 export const searchCourses = async (req, res) => {
   try {

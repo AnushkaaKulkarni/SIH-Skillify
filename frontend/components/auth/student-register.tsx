@@ -174,7 +174,6 @@ export function StudentRegister() {
               ["jobRole", "Job Role", jobRole, setJobRole],
               ["currentAssignment", "Current Assignment", currentAssignment, setCurrentAssignment],
               ["qualification", "Qualification", qualification, setQualification],
-              ["targetRole", "Target Role", targetRole, setTargetRole],
             ].map(([id, label, value, setter]) => (
               <div className="space-y-2" key={id as string}>
                 <Label htmlFor={id as string} className="text-sm font-medium text-foreground">
@@ -190,6 +189,18 @@ export function StudentRegister() {
                 />
               </div>
             ))}
+
+            <div className="space-y-2">
+              <Label htmlFor="targetRole" className="text-sm font-medium text-foreground">Prototype designation</Label>
+              <select id="targetRole" value={targetRole} onChange={(e) => { setTargetRole(e.target.value); setDesignation(e.target.value); }} required className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
+                <option value="">Select your designation</option>
+                <option>Statistical Officer</option>
+                <option>Statistical Analyst</option>
+                <option>Survey / Field Statistics Officer</option>
+                <option>Statistical Programmer / Data Systems Officer</option>
+              </select>
+              <p className="text-xs text-muted-foreground">Representative prototype competency mappings aligned with FRAC principles.</p>
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="yearsOfExperience" className="text-sm font-medium text-foreground">

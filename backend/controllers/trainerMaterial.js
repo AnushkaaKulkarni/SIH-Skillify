@@ -5,6 +5,18 @@ import cloudinary from "../config/cloudinary.js";
 import { normalizeClassification } from "../config/aiPolicy.js";
 import { generateQuizQuestions } from "../services/quizGenerationService.js";
 import extractTextFromUrl from "../utils/extractText.js";
+import { extractTextFromUploadedFile } from "../utils/extractText.js";
+import Competency from "../models/Competency.js";
+
+const createChunks = (text, fileName) => String(text || "").replace(/\s+/g, " ").trim().match(/.{1,1200}(?:\s|$)/g)?.map((chunk, index) => ({
+  index, text: chunk.trim(), sourceReference: `${fileName} — chunk ${index + 1}`,
+  keywords: [...new Set((chunk.toLowerCase().match(/[a-z]{4,}/g) || []).slice(0, 30))],
+})) || [];
+
+const selectRelevantChunks = (chunks, competencies) => {
+  const terms = competencies.flatMap((item) => item.name.toLowerCase().split(/[^a-z]+/)).filter((item) => item.length > 2);
+  return [...chunks].sort((a, b) => terms.reduce((score, term) => score + (b.text.toLowerCase().includes(term) ? 1 : 0), 0) - terms.reduce((score, term) => score + (a.text.toLowerCase().includes(term) ? 1 : 0), 0)).slice(0, 8);
+};
 
 export const uploadMaterial = async (req, res) => {
   try {
@@ -18,6 +30,7 @@ export const uploadMaterial = async (req, res) => {
       classificationSource,
       classificationReason,
       externalAIAllowed,
+      competencyIds,
     } = req.body;
     
     const normalizedClassification = normalizeClassification(classification || "UNKNOWN");
@@ -57,6 +70,8 @@ export const uploadMaterial = async (req, res) => {
       classId = assignedClass;
     }
 
+    const requestedCompetencies = String(competencyIds || "").split(",").filter(Boolean);
+    const validCompetencies = await Competency.find({ _id: { $in: requestedCompetencies } }).select("_id").lean();
     const materials = [];
 
     for (const file of req.files) {
@@ -98,9 +113,21 @@ const stream = cloudinary.uploader.upload_stream(
   classifiedBy: req.user._id,
   classifiedAt: new Date(),
   externalAIAllowed: allowExternalAI,
+  competencies: validCompetencies.map((item) => item._id),
+  processingStatus: "PROCESSING",
 });
-
-      
+      try {
+        const extractedText = await extractTextFromUploadedFile(file);
+        const chunks = createChunks(extractedText, file.originalname);
+        if (!chunks.length) throw new Error("No extractable text was found in this material.");
+        material.extractedText = extractedText.slice(0, 250000);
+        material.chunks = chunks;
+        material.processingStatus = "READY";
+      } catch (processingError) {
+        material.processingStatus = "FAILED";
+        material.processingError = processingError.message;
+      }
+      await material.save();
 
       materials.push(material);
     }
@@ -122,7 +149,7 @@ export const getFacultyMaterials = async (req, res) => {
   try {
     const materials = await Material.find({ faculty: req.user._id })
       .sort({ createdAt: -1 })
-      .select("title description fileName fileType classification classificationSource createdAt")
+      .select("title description fileName fileType classification classificationSource competencies processingStatus processingError createdAt")
       .lean();
 
     res.json(materials);
@@ -214,7 +241,7 @@ GENERATE QUIZ FROM MATERIAL
 */
 export const generateQuizFromMaterial = async (req, res) => {
   try {
-    const { materialId, questionCount, difficulty } = req.body;
+    const { materialId, questionCount, difficulty, competencyIds, targetProficiencyLevel, questionType } = req.body;
 
     const material = await Material.findById(materialId);
     if (!material) {
@@ -226,7 +253,12 @@ export const generateQuizFromMaterial = async (req, res) => {
       return res.status(403).json({ message: "Not authorized to generate quiz from this material" });
     }
 
-    const extractedText = await extractTextFromUrl(material.filePath, material.fileName);
+    if (material.processingStatus !== "READY") return res.status(409).json({ message: `Material is ${material.processingStatus.toLowerCase()}.` });
+    const selectedIds = Array.isArray(competencyIds) && competencyIds.length ? competencyIds : material.competencies;
+    const competencies = await Competency.find({ _id: { $in: selectedIds } }).select("name domain").lean();
+    if (!competencies.length) return res.status(400).json({ message: "Select at least one valid competency before generating questions." });
+    const chunks = selectRelevantChunks(material.chunks || [], competencies);
+    const extractedText = chunks.map((chunk) => `[${chunk.sourceReference}] ${chunk.text}`).join("\n\n") || await extractTextFromUrl(material.filePath, material.fileName);
 
     // Generate quiz using AI Gateway
     const questions = await generateQuizQuestions({
@@ -238,6 +270,10 @@ export const generateQuizFromMaterial = async (req, res) => {
       classificationSource: material.classificationSource,
       externalAIAllowed: material.externalAIAllowed,
       allowFallback: false,
+      competencyIds: competencies.map((item) => item._id),
+      targetProficiencyLevel,
+      questionType,
+      sourceReference: chunks[0]?.sourceReference || material.fileName,
     });
 
     res.json({ 
@@ -247,7 +283,7 @@ export const generateQuizFromMaterial = async (req, res) => {
         title: material.title,
         classification: material.classification,
       },
-      questions 
+      questions, processingStatus: material.processingStatus,
     });
   } catch (error) {
     console.error("QUIZ GENERATION ERROR:", error.message);
@@ -284,12 +320,21 @@ export const saveQuizFromMaterial = async (req, res) => {
       totalQuestions: questions.length,
       faculty: req.user._id,
       status: "DRAFT",
+      material: material._id,
+      assessmentType: "MATERIAL",
       questions: questions.map((question, index) => ({
         questionId: String(question.questionId || question.id || `q_${index + 1}`),
         question: String(question.question || ""),
         options: Array.isArray(question.options) ? question.options.map(String).slice(0, 4) : [],
         correctAnswer: Number(question.correctAnswer ?? question.correct ?? 0),
+        competency: question.competency || question.competencyId || undefined,
+        competencyDomain: question.competencyDomain || undefined,
         difficulty: Number.isInteger(Number(question.difficulty)) ? Number(question.difficulty) : undefined,
+        targetProficiencyLevel: Number(question.targetProficiencyLevel) || undefined,
+        questionType: question.questionType || "knowledge",
+        explanation: String(question.explanation || ""),
+        sourceReference: String(question.sourceReference || material.fileName),
+        aiGenerated: Boolean(question.aiGenerated),
       })),
     });
 

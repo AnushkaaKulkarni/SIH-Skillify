@@ -10,13 +10,19 @@ export const COMPETENCY_UPDATE_WEIGHTS = Object.freeze({
 });
 
 export const SCORE_LEVEL_THRESHOLDS = Object.freeze([
-  { minimum: 0, level: 0 },
-  { minimum: 20, level: 1 },
+  { minimum: 0, level: 1 },
   { minimum: 40, level: 2 },
-  { minimum: 60, level: 3 },
-  { minimum: 75, level: 4 },
-  { minimum: 90, level: 5 },
+  { minimum: 55, level: 3 },
+  { minimum: 70, level: 4 },
+  { minimum: 85, level: 5 },
 ]);
+
+const difficultyWeight = (difficulty) => {
+  const normalized = String(difficulty || "").toLowerCase();
+  if (normalized === "hard" || Number(difficulty) >= 4) return 1.5;
+  if (normalized === "medium" || Number(difficulty) >= 2) return 1.25;
+  return 1;
+};
 
 export const scoreToLevel = (score) => {
   if (score === null || score === undefined || Number.isNaN(Number(score))) return 0;
@@ -130,16 +136,17 @@ export const updateCompetencyFromAssessment = async ({ user, questions, answers,
 
     const isCorrect = Number(selected) === Number(question.correctAnswer);
     const key = String(question.competency);
-    const current = evidence.get(key) || { correct: 0, total: 0, competency: question.competency };
-    current.correct += isCorrect ? 1 : 0;
-    current.total += 1;
+    const current = evidence.get(key) || { earned: 0, available: 0, competency: question.competency };
+    const weight = difficultyWeight(question.difficulty);
+    current.earned += isCorrect ? weight : 0;
+    current.available += weight;
     evidence.set(key, current);
   }
 
   const updated = [];
   for (const item of evidence.values()) {
-    if (!item.total) continue;
-    const latestScore = Math.round((item.correct / item.total) * 100);
+    if (!item.available) continue;
+    const latestScore = Math.round((item.earned / item.available) * 100);
     const existing = await UserCompetency.findOne({ user: user._id, competency: item.competency });
     const score = calculateCompetencyScore({ previousScore: existing?.score, latestScore });
     const record = await UserCompetency.findOneAndUpdate(

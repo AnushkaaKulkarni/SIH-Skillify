@@ -31,6 +31,12 @@ const examSchema = new mongoose.Schema({
         ref: "CompetencyDomain",
       },
       difficulty: { type: Number, min: 0, max: 5 },
+      targetProficiencyLevel: { type: Number, min: 1, max: 5 },
+      questionType: { type: String, enum: ["knowledge", "conceptual", "application", "scenario", "diagnostic"], default: "knowledge" },
+      explanation: { type: String, default: "" },
+      sourceReference: { type: String, default: "" },
+      aiGenerated: { type: Boolean, default: false },
+      revisionHistory: [{ question: String, changedAt: Date, changedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" } }],
     }
   ],
 
@@ -65,6 +71,11 @@ const examSchema = new mongoose.Schema({
 
   scheduledAt: Date,
   competencyTags: [{ type: mongoose.Schema.Types.ObjectId, ref: "Competency" }],
+  material: { type: mongoose.Schema.Types.ObjectId, ref: "Material" },
+  assessmentType: { type: String, enum: ["STANDARD", "DIAGNOSTIC", "MATERIAL"], default: "STANDARD" },
+  generatedByModel: String,
+  approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  approvedAt: Date,
 }, { timestamps: true });
 
 export default mongoose.model("Exam", examSchema);
