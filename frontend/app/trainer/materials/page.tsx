@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,6 +25,7 @@ export default function TrainerMaterialsPage() {
   const [generating, setGenerating] = useState(false)
   const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([])
   const [error, setError] = useState('')
+  const router = useRouter()
 
   useEffect(() => {
     fetchMaterials()
@@ -64,6 +66,23 @@ export default function TrainerMaterialsPage() {
       setError(err.response?.data?.message || err.message || 'Quiz generation failed')
     } finally {
       setGenerating(false)
+    }
+  }
+
+  const handleSaveQuiz = async () => {
+    if (!selectedMaterial || generatedQuestions.length === 0) return
+
+    try {
+      const res = await API.post(`/trainer/materials/${selectedMaterial._id}/assessment`, {
+        materialId: selectedMaterial._id,
+        questions: generatedQuestions,
+        title: selectedMaterial.title,
+        subject: selectedMaterial.description || selectedMaterial.title,
+        difficulty,
+      })
+      router.push(`/trainer/create-exam?examId=${res.data.examId}`)
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to save assessment')
     }
   }
 
@@ -224,14 +243,14 @@ export default function TrainerMaterialsPage() {
                     </Select>
                   </div>
 
-                  {!selectedMaterial.externalAIAllowed && (
+                  {['CATEGORY_C_RESTRICTED_ACCESS', 'NON_SHAREABLE'].includes(selectedMaterial.classification) && (
                     <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                       <div className="flex items-start gap-2">
                         <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5" />
                         <div>
                           <p className="text-sm font-medium text-yellow-800">AI Generation Restricted</p>
                           <p className="text-xs text-yellow-700 mt-1">
-                            This material's classification does not permit external AI processing.
+                            Generating assessment using approved private AI processing.
                           </p>
                         </div>
                       </div>
@@ -240,7 +259,7 @@ export default function TrainerMaterialsPage() {
 
                   <Button
                     onClick={handleGenerateQuiz}
-                    disabled={generating || !selectedMaterial.externalAIAllowed}
+                    disabled={generating}
                     className="w-full"
                   >
                     {generating ? (
@@ -288,13 +307,10 @@ export default function TrainerMaterialsPage() {
               </div>
 
               <Button
-                onClick={() => {
-                  // TODO: Save quiz and redirect to exam creation
-                  alert('Quiz saved! (Save functionality to be implemented)')
-                }}
+                onClick={handleSaveQuiz}
                 className="w-full mt-4"
               >
-                Save Quiz
+                Save Assessment and Assign
               </Button>
             </Card>
           )}

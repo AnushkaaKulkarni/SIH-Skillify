@@ -53,11 +53,13 @@ export const createExamFromDoc = async (req, res) => {
       totalQuestions,
       faculty: req.user._id,
       status: "DRAFT",
-      questions: generatedQuestions.map((q, idx) => ({
-  questionId: q.questionId || `q_${idx + 1}`,
+        questions: generatedQuestions.map((q, idx) => ({
+      questionId: q.questionId || q.id || `q_${idx + 1}`,
   question: q.question,
   options: q.options,
-  correctAnswer: q.correctAnswer,
+      correctAnswer: q.correctAnswer ?? q.correct,
+      explanation: q.explanation,
+      difficulty: q.difficulty,
 })),
     });
 

@@ -3,6 +3,7 @@ import { evaluateAIClassification } from "../../config/aiPolicy.js";
 import GeminiProvider from "./providers/geminiProvider.js";
 import GroqProvider from "./providers/groqProvider.js";
 import OllamaProvider from "./providers/ollamaProvider.js";
+import LMStudioProvider from "./providers/lmstudioProvider.js";
 
 /**
  * AI Gateway
@@ -46,6 +47,7 @@ class AIGateway {
     
     // Initialize private provider (optional - may be unavailable)
     this.providers.set("ollama", new OllamaProvider());
+    this.providers.set("lmstudio", new LMStudioProvider());
   }
 
   /**
@@ -59,11 +61,11 @@ class AIGateway {
    * Check if private provider is available
    */
   async isPrivateProviderAvailable() {
-    const ollama = this.getProvider("ollama");
-    if (!ollama) return false;
+    const privateProvider = this.getProvider(process.env.AI_PRIVATE_PROVIDER || "lmstudio");
+    if (!privateProvider) return false;
     
     try {
-      const health = await ollama.healthCheck();
+      const health = await privateProvider.healthCheck();
       return health.available;
     } catch (error) {
       return false;
@@ -145,7 +147,7 @@ class AIGateway {
     
     if (processingMode === "private") {
       // Policy requires private processing
-      provider = this.getProvider("ollama");
+      provider = this.getProvider(process.env.AI_PRIVATE_PROVIDER || "lmstudio");
       
       if (!provider) {
         const latency = Date.now() - startTime;

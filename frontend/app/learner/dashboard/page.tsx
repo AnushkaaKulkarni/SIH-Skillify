@@ -358,6 +358,66 @@ export default function LearnerDashboard() {
         </div>
 
         {/* RECENT ACTIVITY */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="p-6 glass-morphism hover-lift">
+            <h2 className="font-semibold text-foreground mb-4">Profile and Readiness</h2>
+            <div className="space-y-2 text-sm">
+              <p><span className="font-medium">Learner:</span> {dashboardData.profile?.fullName || "Not available"}</p>
+              <p><span className="font-medium">Designation:</span> {dashboardData.profile?.designation || "Not specified"}</p>
+              <p><span className="font-medium">Target role:</span> {dashboardData.profile?.targetRole || "Not configured"}</p>
+              <p><span className="font-medium">Competencies:</span> {dashboardData.competencyOverview?.competencies?.length || 0}</p>
+              <p><span className="font-medium">Open gaps:</span> {(dashboardData.competencyOverview?.competencies || []).filter((item: any) => item.gap?.status === "open").length}</p>
+            </div>
+          </Card>
+
+          <Card className="p-6 glass-morphism hover-lift">
+            <h2 className="font-semibold text-foreground mb-4">Assigned Assessments</h2>
+            {dashboardData.scheduledAssessments?.length ? (
+              <div className="space-y-3">
+                {dashboardData.scheduledAssessments.slice(0, 4).map((assessment: any) => (
+                  <div key={assessment._id} className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-medium">{assessment.title}</p>
+                      <p className="text-xs text-muted-foreground">{assessment.subject}</p>
+                    </div>
+                    <Button size="sm" onClick={() => router.push(`/learner/quiz/take/${assessment._id}`)}>Open</Button>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="text-sm text-muted-foreground">No assessments assigned yet.</p>}
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="p-6 glass-morphism hover-lift">
+            <h2 className="font-semibold text-foreground mb-4">Competency Status</h2>
+            {dashboardData.competencyOverview?.competencies?.length ? (
+              <div className="space-y-3">
+                {dashboardData.competencyOverview.competencies.slice(0, 6).map((item: any) => (
+                  <div key={item.competency._id} className="border-b border-border pb-2">
+                    <div className="flex justify-between gap-3 text-sm">
+                      <span>{item.competency.name}</span>
+                      <span className="font-medium">{item.current?.score == null ? "Not Assessed" : `${item.current.score}%`}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Required: Level {item.requiredLevel} | Status: {item.current?.score == null ? "Not Assessed" : item.gap?.status === "open" ? "Gap" : "Ready"}</p>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="text-sm text-muted-foreground">Competencies will appear when a target-role mapping is configured.</p>}
+          </Card>
+
+          <Card className="p-6 glass-morphism hover-lift">
+            <h2 className="font-semibold text-foreground mb-4">Recommendations and Training</h2>
+            {dashboardData.recommendations?.length ? dashboardData.recommendations.slice(0, 4).map((item: any) => (
+              <div key={item._id} className="border-b border-border py-2 text-sm">
+                <p className="font-medium">{item.title}</p>
+                <p className="text-xs text-muted-foreground">Recommended from {item.sourceType === "igot" ? "iGOT" : item.sourceType || "internal"} | {item.status}</p>
+              </div>
+            )) : <p className="text-sm text-muted-foreground">Recommendations will appear after an assessed gap is identified.</p>}
+            <p className="text-xs text-muted-foreground mt-3">Training history: {dashboardData.trainingHistory?.length || 0} records</p>
+          </Card>
+        </div>
+
         <Card className="p-6 glass-morphism hover-lift">
           <div className="flex items-center gap-2 mb-4">
             <Activity className="w-5 h-5 text-purple-600" />

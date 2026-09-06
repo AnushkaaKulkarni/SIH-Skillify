@@ -23,6 +23,7 @@ export default function FacultyDashboard() {
     avgPassRate: 0,
     recentExams: [] as any[],
     subjectPerformance: [] as any[],
+    learnerProgress: [] as any[],
   })
 
   const token =
@@ -56,6 +57,7 @@ export default function FacultyDashboard() {
           avgPassRate: data.avgPassRate || 0,
           recentExams: data.recentExams || [],
           subjectPerformance: data.subjectPerformance || [],
+          learnerProgress: data.learnerProgress || [],
         })
       } catch (err) {
         console.error('Dashboard fetch failed:', err)
@@ -138,6 +140,31 @@ export default function FacultyDashboard() {
             color="from-purple-500 to-purple-600"
           />
         </div>
+
+        <Card className="p-6 glass-morphism hover-lift">
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="w-5 h-5 text-blue-600" />
+            <h2 className="text-lg font-semibold text-foreground">Authorized Learner Progress</h2>
+          </div>
+          {dashboardData.learnerProgress.length === 0 ? (
+            <p className="text-muted-foreground">No authorized learners yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {dashboardData.learnerProgress.slice(0, 8).map((learner: any) => (
+                <div key={learner._id} className="flex items-center justify-between gap-4 border-b border-border pb-3">
+                  <div>
+                    <p className="font-medium text-foreground">{learner.fullName}</p>
+                    <p className="text-xs text-muted-foreground">{learner.designation || ""} {learner.targetRole ? `| ${learner.targetRole}` : ""}</p>
+                  </div>
+                  <div className="text-right text-sm">
+                    <p className="font-medium">{learner.readiness}</p>
+                    <p className="text-xs text-muted-foreground">{learner.latestScore == null ? "No score" : `${learner.latestScore}%`} | {learner.openGaps} gaps</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
 
         {/* MAIN SECTION */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

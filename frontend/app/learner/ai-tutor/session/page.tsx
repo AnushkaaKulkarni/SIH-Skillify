@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { ArrowLeft, RotateCcw } from 'lucide-react'
 import jsPDF from 'jspdf'
+import API from '@/lib/api'
 
 export default function SessionPage() {
   const searchParams = useSearchParams()
@@ -126,13 +127,10 @@ export default function SessionPage() {
   }
 
   const handleStart = async () => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai-tutor/start`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ topic: subject, minutes })
+    const { data } = await API.post('/ai-tutor/start', {
+      topic: subject,
+      minutes,
     })
-
-    const data = await res.json()
 
     const structuredText = (data.steps || [])
       .map((step: any) => {

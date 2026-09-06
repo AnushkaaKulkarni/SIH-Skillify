@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,6 +17,7 @@ import {
 import { Upload, Wand2 } from 'lucide-react'
 
 export default function CreateExamPage() {
+  const searchParams = useSearchParams()
   const [topic, setTopic] = useState('')
   const [description, setDescription] = useState('')
   const [subject, setSubject] = useState('')
@@ -44,6 +46,31 @@ const [selectedClass, setSelectedClass] = useState<string>('')
 const [showAssignSemester, setShowAssignSemester] = useState(false)
 const [facultySemesters, setFacultySemesters] = useState<any[]>([])
 const [selectedSemester, setSelectedSemester] = useState<string>('')
+
+  useEffect(() => {
+    const existingExamId = searchParams.get('examId')
+    if (!existingExamId) return
+
+    const loadDraft = async () => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/trainer/exams/${existingExamId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      })
+      if (!res.ok) return
+      const exam = await res.json()
+      setExamId(exam._id)
+      setTopic(exam.title || '')
+      setDescription(exam.description || '')
+      setSubject(exam.subject || '')
+      setDifficulty(exam.difficulty || 'medium')
+      setDuration(exam.duration || 60)
+      setTotalQuestions(exam.questions?.length || 0)
+      setGeneratedQuiz({ topic: exam.title, subject: exam.subject, difficulty: exam.difficulty, questions: exam.questions || [] })
+      setQuizGenerated(true)
+      setExamApproved(exam.status !== 'DRAFT')
+    }
+
+    loadDraft().catch((error) => console.error('Failed to load saved assessment:', error))
+  }, [searchParams])
 
   // Sample generated questions
   // const sampleQuestions = [

@@ -17,7 +17,6 @@ class OllamaProvider extends BaseAIProvider {
     this.type = "private";
     
     // Ollama is optional - don't require it for startup
-    console.log(`OllamaProvider configured: ${this.baseUrl}, model: ${this.modelName}`);
   }
 
   getType() {
@@ -36,12 +35,18 @@ class OllamaProvider extends BaseAIProvider {
       });
       
       if (!response.ok) {
-        throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+        const detail = await response.text().catch(() => "");
+        const suffix = detail ? `: ${detail.slice(0, 200)}` : "";
+        throw new Error(`Ollama API error: ${response.status} ${response.statusText}${suffix}`);
       }
-      
-      return await response.json();
+
+      const responseData = await response.json();
+      if (!responseData || typeof responseData !== "object") {
+        throw new Error("Ollama returned a malformed response");
+      }
+
+      return responseData;
     } catch (error) {
-      console.error("OllamaProvider request error:", error.message);
       throw error;
     }
   }
@@ -80,7 +85,6 @@ class OllamaProvider extends BaseAIProvider {
         },
       };
     } catch (error) {
-      console.error("OllamaProvider error:", error.message);
       return {
         success: false,
         error: error.message,
@@ -122,14 +126,13 @@ class OllamaProvider extends BaseAIProvider {
       
       const text = response?.message?.content || "";
       
-      // Clean markdown if present
+      // Clean common wrapper text before parsing model output.
       const cleanedText = text.replace(/```json|```/g, "").trim();
       
       let parsedData;
       try {
         parsedData = JSON.parse(cleanedText);
       } catch (parseError) {
-        console.error("OllamaProvider JSON parse error:", parseError.message);
         return {
           success: false,
           error: "Failed to parse JSON response",
@@ -151,7 +154,6 @@ class OllamaProvider extends BaseAIProvider {
         },
       };
     } catch (error) {
-      console.error("OllamaProvider structured error:", error.message);
       return {
         success: false,
         error: error.message,
@@ -179,7 +181,7 @@ class OllamaProvider extends BaseAIProvider {
       
       // Check if the configured model is available
       const models = data?.models || [];
-      const modelAvailable = models.some(m => m.name.startsWith(this.modelName));
+      const modelAvailable = models.some(m => m?.name === this.modelName);
       
       const latency = Date.now() - startTime;
       

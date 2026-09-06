@@ -9,7 +9,7 @@ const router = express.Router();
 router.get(
   "/list",
   protect,
-  authorizeRoles("student"),
+  authorizeRoles("student", "learner"),
   listStudentQuizAttempts
 );
 
@@ -17,7 +17,7 @@ router.get(
 router.get(
   "/:attemptId",
   protect,
-  authorizeRoles("student"),
+  authorizeRoles("student", "learner"),
   getQuizResult
 );
 

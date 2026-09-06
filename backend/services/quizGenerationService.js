@@ -21,6 +21,9 @@ const normalizeQuestion = (question, index) => {
     question: String(question?.question || ""),
     options,
     correct: safeCorrect,
+    correctAnswer: question?.correctAnswer ? String(question.correctAnswer) : options[safeCorrect],
+    explanation: String(question?.explanation || ""),
+    difficulty: String(question?.difficulty || "medium"),
   };
 };
 
@@ -54,19 +57,25 @@ const genericFallback = (count) => {
 
 export const generateQuizQuestions = async ({
   subject,
+  materialText = "",
   questions,
   difficulty,
   classification = "CATEGORY_A_OPEN_ACCESS",
   classificationSource = "MOSPI_GSDD_2026",
   externalAIAllowed = true,
+  allowFallback = true,
 }) => {
   const safeCount = Math.max(1, toNumber(questions, 10));
   const safeDifficulty = String(difficulty || "mixed").toLowerCase();
   const safeSubject = String(subject || "general").trim();
 
+  const sourceText = String(materialText || subject).slice(0, 30000);
   const prompt = `
 Generate ${safeCount} multiple-choice questions strictly based on:
 "${safeSubject}"
+
+Source material:
+${sourceText}
 
 Difficulty: ${safeDifficulty}
 
@@ -74,7 +83,7 @@ Rules:
 - Questions must ONLY belong to the given subject/topic
 - 4 options exactly
 - One correct answer
-- No explanations
+  - Include a brief explanation and difficulty for each question
 - No extra text
 - Output ONLY valid JSON in the format below
 
@@ -84,7 +93,9 @@ Rules:
       "id": "q1",
       "question": "",
       "options": ["", "", "", ""],
-      "correct": 0
+        "correct": 0,
+        "explanation": "",
+        "difficulty": "medium"
     }
   ]
 }
@@ -109,11 +120,15 @@ Rules:
       if (parsed.length > 0) {
         return parsed.slice(0, safeCount);
       }
+
+      throw new Error("AI provider returned no valid quiz questions.");
     }
-    
-    // If gateway blocked or failed, log and use fallback
-    console.warn("AI Gateway quiz generation failed:", gatewayResponse.reason || gatewayResponse.error);
+
+    const gatewayError = gatewayResponse.reason || gatewayResponse.error || "AI quiz generation failed.";
+    if (!allowFallback) throw new Error(gatewayError);
+    console.warn("AI Gateway quiz generation failed:", gatewayError);
   } catch (error) {
+    if (!allowFallback) throw error;
     console.error("AI Gateway error:", error.message);
   }
 

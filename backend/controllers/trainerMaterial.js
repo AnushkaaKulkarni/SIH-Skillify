@@ -1,8 +1,10 @@
 import Material from "../models/Material.js";
+import Exam from "../models/Exam.js";
 import User from "../models/User.js";
 import cloudinary from "../config/cloudinary.js";
 import { normalizeClassification } from "../config/aiPolicy.js";
 import { generateQuizQuestions } from "../services/quizGenerationService.js";
+import extractTextFromUrl from "../utils/extractText.js";
 
 export const uploadMaterial = async (req, res) => {
   try {
@@ -224,22 +226,18 @@ export const generateQuizFromMaterial = async (req, res) => {
       return res.status(403).json({ message: "Not authorized to generate quiz from this material" });
     }
 
-    // Check if external AI is allowed
-    if (!material.externalAIAllowed) {
-      return res.status(403).json({ 
-        message: "AI generation is not permitted for this material because external AI processing is not authorized.",
-        reason: "EXTERNAL_AI_NOT_AUTHORIZED"
-      });
-    }
+    const extractedText = await extractTextFromUrl(material.filePath, material.fileName);
 
     // Generate quiz using AI Gateway
     const questions = await generateQuizQuestions({
       subject: material.description || material.title,
+      materialText: extractedText,
       questions: questionCount || 10,
       difficulty: difficulty || "medium",
       classification: material.classification,
       classificationSource: material.classificationSource,
       externalAIAllowed: material.externalAIAllowed,
+      allowFallback: false,
     });
 
     res.json({ 
@@ -252,10 +250,52 @@ export const generateQuizFromMaterial = async (req, res) => {
       questions 
     });
   } catch (error) {
-    console.error("QUIZ GENERATION ERROR:", error);
-    res.status(500).json({ 
+    console.error("QUIZ GENERATION ERROR:", error.message);
+    const isPrivateProviderUnavailable = error.message.startsWith("PRIVATE_PROVIDER_UNAVAILABLE");
+    res.status(isPrivateProviderUnavailable ? 503 : 500).json({
       message: "Quiz generation failed",
-      error: error.message 
+      error: error.message,
+      reason: isPrivateProviderUnavailable
+        ? "PRIVATE_PROVIDER_UNAVAILABLE"
+        : undefined,
     });
+  }
+};
+
+export const saveQuizFromMaterial = async (req, res) => {
+  try {
+    const { materialId, questions, title, subject, difficulty, duration = 60 } = req.body;
+    const material = await Material.findOne({ _id: materialId, faculty: req.user._id });
+
+    if (!material) {
+      return res.status(404).json({ message: "Material not found" });
+    }
+
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({ message: "At least one question is required" });
+    }
+
+    const exam = await Exam.create({
+      title: title || material.title,
+      description: material.description,
+      subject: subject || material.description || material.title,
+      difficulty: difficulty || "medium",
+      duration: Number(duration) || 60,
+      totalQuestions: questions.length,
+      faculty: req.user._id,
+      status: "DRAFT",
+      questions: questions.map((question, index) => ({
+        questionId: String(question.questionId || question.id || `q_${index + 1}`),
+        question: String(question.question || ""),
+        options: Array.isArray(question.options) ? question.options.map(String).slice(0, 4) : [],
+        correctAnswer: Number(question.correctAnswer ?? question.correct ?? 0),
+        difficulty: Number.isInteger(Number(question.difficulty)) ? Number(question.difficulty) : undefined,
+      })),
+    });
+
+    return res.status(201).json({ success: true, examId: exam._id, status: exam.status });
+  } catch (error) {
+    console.error("SAVE MATERIAL QUIZ ERROR:", error.message);
+    return res.status(500).json({ message: "Failed to save assessment" });
   }
 };

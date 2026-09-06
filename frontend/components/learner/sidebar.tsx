@@ -10,16 +10,13 @@ import {
   Brain,
   Mic2,
   Briefcase,
-  Award,
+  Target,
   Bell,
   BookOpen,
   User,
   LogOut,
   Sparkles,
   GraduationCap,
-  MessageCircle,
-  AlertCircle,
-  Code,
   Lock,
 } from 'lucide-react'
 
@@ -31,52 +28,22 @@ const menuItems = [
     feature: 'Dashboard',
   },
   {
-    label: 'AI Quiz',
+    label: 'My Competencies',
     icon: Brain,
-    href: '/learner/quiz',
-    feature: 'AI Quiz',
+    href: '/learner/profile',
+    feature: 'Profile',
   },
   {
-    label: 'Code Editor',
-    icon: Code,
-    href: '/learner/code-editor',
-    feature: 'Code Editor',
+    label: 'Skill Gaps',
+    icon: Target,
+    href: '/learner/profile',
+    feature: 'Profile',
   },
   {
-    label: 'Exams',
+    label: 'Learning',
     icon: BookOpen,
-    href: '/learner/exams',
-    feature: 'Exams',
-  },
-  {
-    label: 'MarkSheets',
-    icon: GraduationCap,
-    href: '/learner/marksheets',
-    feature: 'MarkSheets',
-  },
-  {
-    label: 'Oral Practice',
-    icon: Mic2,
-    href: '/learner/oral',
-    feature: 'Oral Practice',
-  },
-  {
-    label: 'Interview Practice',
-    icon: Briefcase,
-    href: '/learner/interview',
-    feature: 'Interview',
-  },
-  {
-    label: 'Courses',
-    icon: Award,
     href: '/learner/certifications',
     feature: 'Courses',
-  },
-  {
-    label: 'Notifications',
-    icon: Bell,
-    href: '/learner/notifications',
-    feature: 'Notifications',
   },
   {
     label: 'Materials',
@@ -85,28 +52,29 @@ const menuItems = [
     feature: 'Materials',
   },
   {
+    label: 'Assessments',
+    icon: GraduationCap,
+    href: '/learner/quiz',
+    feature: 'AI Quiz',
+  },
+  {
     label: 'AI Tutor',
     icon: GraduationCap,
     href: '/learner/ai-tutor',
     feature: 'AI Tutor',
   },
   {
-    label: 'AI Notes',
-    icon: Brain,
-    href: '/learner/ai-notes',
-    feature: 'AI Notes',
+    label: 'Recommendations',
+    icon: Sparkles,
+    href: '/learner/profile',
+    feature: 'Profile',
+    comingSoon: true,
   },
   {
-    label: 'AI Mentor',
-    icon: MessageCircle,
-    href: '/learner/ai-mentor',
-    feature: 'AI Mentor',
-  },
-  {
-    label: 'Grievances',
-    icon: AlertCircle,
-    href: '/learner/grievances',
-    feature: 'Grievances',
+    label: 'Notifications',
+    icon: Bell,
+    href: '/learner/notifications',
+    feature: 'Notifications',
   },
   {
     label: 'Profile',
@@ -142,12 +110,12 @@ export function StudentSidebar() {
 
             return (
               <FeatureTooltip
-                key={item.href}
+                key={item.label}
                 feature={item.feature}
                 role="learner"
                 isLocked={!canAccess}
               >
-                {canAccess ? (
+                {canAccess && !item.comingSoon ? (
                   <Link
                     href={item.href}
                     className={cn(
@@ -158,7 +126,7 @@ export function StudentSidebar() {
                     )}
                   >
                     <Icon className="w-5 h-5" />
-                    <span>{item.label}</span>
+                    <span>{item.comingSoon ? `${item.label} (Coming Soon)` : item.label}</span>
                   </Link>
                 ) : (
                   <div
@@ -176,6 +144,43 @@ export function StudentSidebar() {
               </FeatureTooltip>
             )
           })}
+
+          <div className="mt-4 border-t border-sidebar-border pt-3">
+            <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Practice
+            </p>
+            {[
+              { label: 'Oral Practice', icon: Mic2, href: '/learner/oral', feature: 'Oral Practice' },
+              { label: 'Interview Practice', icon: Briefcase, href: '/learner/interview', feature: 'Interview' },
+            ].map((item) => {
+              const Icon = item.icon
+              const canAccess = hasFeature(item.feature, 'learner')
+
+              return (
+                <FeatureTooltip
+                  key={item.href}
+                  feature={item.feature}
+                  role="learner"
+                  isLocked={!canAccess}
+                >
+                  {canAccess ? (
+                    <Link
+                      href={item.href}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50"
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span>{item.label}</span>
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground opacity-60">
+                      <Lock className="w-5 h-5" />
+                      <span>{item.label}</span>
+                    </div>
+                  )}
+                </FeatureTooltip>
+              )
+            })}
+          </div>
         </div>
       </nav>
 

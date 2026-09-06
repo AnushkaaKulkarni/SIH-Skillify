@@ -34,6 +34,8 @@ const userSchema = new mongoose.Schema(
     // Workforce profile fields for learners/officials and training officers.
     designation: String,
 
+    jobRole: String,
+
     officialId: {
       type: String,
       unique: true,

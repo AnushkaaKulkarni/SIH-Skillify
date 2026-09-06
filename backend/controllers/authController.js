@@ -16,10 +16,10 @@ export const registerUser = async (req, res) => {
       phone,
       password,
       role,
-      educationLevel,
       employeeId,
       officialId,
       designation,
+      jobRole,
       department,
       organization,
       currentAssignment,
@@ -54,6 +54,7 @@ export const registerUser = async (req, res) => {
       employeeId,
       officialId,
       designation,
+      jobRole,
       department,
       organization,
       currentAssignment,
@@ -67,7 +68,6 @@ export const registerUser = async (req, res) => {
     if (normalizedRole === "learner") {
       userData.studentId = roleId;
       userData.officialId = officialId || roleId;
-      userData.educationLevel = educationLevel;
       userData.faceVerified = false;
     }
 
@@ -81,13 +81,13 @@ export const registerUser = async (req, res) => {
 
     const user = await User.create(userData);
 
-    // Generate competency profile from registration data (non-blocking)
+    // Identify relevant competencies without creating assessment evidence.
     if (normalizedRole === "learner") {
       setImmediate(async () => {
         try {
           await generateCompetencyProfile(user);
         } catch (profileError) {
-          console.error("Competency profile generation failed during registration:", profileError.message);
+          console.error("Competency relevance identification failed during registration:", profileError.message);
         }
       });
     }
@@ -98,6 +98,18 @@ export const registerUser = async (req, res) => {
       user: {
         id: user._id,
         role: user.role,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        designation: user.designation,
+        jobRole: user.jobRole,
+        department: user.department,
+        organization: user.organization,
+        currentAssignment: user.currentAssignment,
+        qualification: user.qualification,
+        yearsOfExperience: user.yearsOfExperience,
+        previousTraining: user.previousTraining,
+        targetRole: user.targetRole,
         officialId: user.officialId,
         employeeId: user.employeeId,
       },

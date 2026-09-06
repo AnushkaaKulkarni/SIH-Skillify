@@ -174,7 +174,7 @@ export const evaluateAIClassification = ({
       processingMode: canUsePrivate ? "private" : "blocked",
       reason: canUsePrivate 
         ? "Non-shareable data may use approved private AI provider."
-        : "EXTERNAL_AI_NOT_AUTHORIZED: Non-shareable data cannot be processed by external AI providers.",
+        : "PRIVATE_PROVIDER_UNAVAILABLE: Non-shareable data requires an available approved private AI provider.",
       policy,
     };
   }
@@ -189,7 +189,7 @@ export const evaluateAIClassification = ({
       processingMode: canUsePrivate ? "private" : "blocked",
       reason: canUsePrivate
         ? "Restricted data may use approved private AI provider."
-        : "EXTERNAL_AI_NOT_AUTHORIZED: Category C (Restricted Access) data requires authorized private processing.",
+        : "PRIVATE_PROVIDER_UNAVAILABLE: Category C (Restricted Access) data requires an available approved private AI provider.",
       policy,
     };
   }

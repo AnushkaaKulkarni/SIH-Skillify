@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 export default function LearnerProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<any>(null);
+  const [competencyOverview, setCompetencyOverview] = useState<any>(null);
 
   useEffect(() => {
     fetchProfile();
@@ -18,8 +19,12 @@ export default function LearnerProfile() {
 
   const fetchProfile = async () => {
     try {
-      const res = await API.get("/auth/profile"); // IMPORTANT
+      const [res, overviewRes] = await Promise.all([
+        API.get("/auth/profile"),
+        API.get("/learner/competencies/overview"),
+      ]);
       setFormData(res.data);
+      setCompetencyOverview(overviewRes.data);
     } catch (error) {
       console.error(error);
     }
@@ -210,6 +215,36 @@ export default function LearnerProfile() {
           </div>
         )}
       </div>
+    </div>
+  </Card>
+
+  <Card className="border border-gray-200 shadow-sm rounded-xl bg-white">
+    <div className="p-8 space-y-5">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900">Competency Baseline</h2>
+        <p className="text-sm text-gray-600 mt-1">
+          Target role: {competencyOverview?.targetRole || formData.targetRole || "Not configured"}
+        </p>
+      </div>
+      {!competencyOverview?.competencies?.length ? (
+        <p className="text-sm text-gray-600">No official role competency mapping is configured yet.</p>
+      ) : (
+        <div className="space-y-3">
+          {competencyOverview.competencies.map((item: any) => (
+            <div key={item.competency._id} className="border rounded-lg p-4">
+              <div className="flex justify-between gap-4">
+                <span className="font-medium">{item.competency.name}</span>
+                <span className="text-sm text-gray-600">
+                  {item.current?.score == null ? "Not Assessed" : `${item.current.score}%`}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Required level: {item.requiredLevel} | Gap: {item.gap?.gap ?? "-"}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   </Card>
 </div>

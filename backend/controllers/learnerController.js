@@ -2,6 +2,9 @@ import InterviewSession from "../models/Interview.js";
 import FacultyOralAttempt from "../models/FacultyOralAttempt.js";
 import ExamAttempt from "../models/ExamAttempt.js";
 import QuizAttempt from "../models/QuizAttempt.js";
+import Recommendation from "../models/Recommendation.js";
+import TrainingHistory from "../models/TrainingHistory.js";
+import { getLearnerCompetencyOverview } from "../services/competencyEngine.js";
 
 export const getStudentDashboard = async (req, res) => {
   try {
@@ -18,6 +21,25 @@ export const getStudentDashboard = async (req, res) => {
       student: studentId,
       isFinalized: true
     });
+
+    const competencyOverview = await getLearnerCompetencyOverview(req.user);
+    const [scheduledAssessments, recommendations, trainingHistory] = await Promise.all([
+      Exam.find({
+        status: "SCHEDULED",
+        $or: [
+          { scope: "ALL" },
+          { scope: "SELECTED", assignedStudents: req.user._id },
+        ],
+      }).select("_id title subject scheduledAt totalQuestions status"),
+      Recommendation.find({ user: studentId })
+        .populate("competency", "name code")
+        .sort({ createdAt: -1 })
+        .lean(),
+      TrainingHistory.find({ user: studentId })
+        .populate("competency", "name code")
+        .sort({ createdAt: -1 })
+        .lean(),
+    ]);
 
     // Merge and normalize both datasets
     const combinedAttempts = [
@@ -175,6 +197,22 @@ export const getStudentDashboard = async (req, res) => {
       oralTrend,
       subjectPerformance,
       recentActivity,
+      profile: {
+        fullName: req.user.fullName,
+        designation: req.user.designation,
+        department: req.user.department,
+        organization: req.user.organization,
+        jobRole: req.user.jobRole,
+        currentAssignment: req.user.currentAssignment,
+        qualification: req.user.qualification,
+        yearsOfExperience: req.user.yearsOfExperience,
+        previousTraining: req.user.previousTraining || [],
+        targetRole: req.user.targetRole,
+      },
+      competencyOverview,
+      scheduledAssessments,
+      recommendations,
+      trainingHistory,
     });
   } catch (err) {
     console.error("Dashboard Error:", err);

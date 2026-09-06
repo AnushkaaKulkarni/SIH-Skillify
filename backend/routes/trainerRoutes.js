@@ -137,11 +137,13 @@ import { protect } from "../middlewares/authMiddleware.js";
 import { authorizeRoles } from "../middlewares/roleMiddleware.js";
 import User from "../models/User.js";
 import upload from "../middlewares/upload.js";
+import { getLearnerCompetencyOverview } from "../services/competencyEngine.js";
 import { uploadMaterial } from "../controllers/trainerMaterial.js";
 import {
   getFacultyStudents,
   removeStudentConnection,
   generateQuizFromMaterial,
+  saveQuizFromMaterial,
   getFacultyMaterials,
 } from "../controllers/trainerMaterial.js";
 import ExamAttempt from "../models/ExamAttempt.js";
@@ -149,6 +151,35 @@ import Exam from "../models/Exam.js";
 
 const router = express.Router();
 
+router.post(
+  "/materials/:materialId/assessment",
+  protect,
+  authorizeRoles("trainer", "faculty"),
+  saveQuizFromMaterial
+      const faculty = await User.findById(facultyId).populate("students");
+
+      const learnerProgress = await Promise.all((faculty?.students || []).map(async (student) => {
+        const [latestAttempt, overview] = await Promise.all([
+          ExamAttempt.findOne({ student: student._id, status: { $in: ["SUBMITTED", "AUTO_SUBMITTED"] } })
+            .sort({ submittedAt: -1 })
+            .select("score submittedAt exam"),
+          getLearnerCompetencyOverview(student),
+        ]);
+        const competencies = overview.competencies || [];
+        const readiness = competencies.length === 0 || competencies.some((item) => item.current?.score == null)
+          ? "NOT ASSESSED"
+          : competencies.some((item) => item.gap?.status === "open") ? "GAP" : "READY";
+        return {
+          _id: student._id,
+          fullName: student.fullName,
+          designation: student.designation,
+          targetRole: student.targetRole,
+          latestScore: latestAttempt?.score ?? null,
+          latestAssessmentAt: latestAttempt?.submittedAt ?? null,
+          readiness,
+          openGaps: competencies.filter((item) => item.gap?.status === "open").length,
+        };
+      }));
 router.get(
   "/dashboard",
   protect,
@@ -189,6 +220,7 @@ const recentExams = await Promise.all(
 );
       /* 5️⃣ SUBJECT PERFORMANCE */
       const subjectPerformance = await Exam.aggregate([
+        learnerProgress,
         { $match: { faculty: facultyId } },
         {
           $group: {

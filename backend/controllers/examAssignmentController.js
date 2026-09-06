@@ -21,7 +21,13 @@ export const assignStudentsToExam = async (req, res) => {
       const faculty = await User.findById(req.user._id);
       students = faculty.students || [];
     } else if (scope === "SELECTED") {
-      students = studentIds;
+      const faculty = await User.findById(req.user._id).select("students");
+      const allowedStudents = new Set((faculty?.students || []).map((id) => String(id)));
+      students = (Array.isArray(studentIds) ? studentIds : [])
+        .filter((id) => allowedStudents.has(String(id)));
+      if (students.length === 0) {
+        return res.status(400).json({ message: "Select at least one learner assigned to this trainer" });
+      }
     } else if (scope === "CLASS") {
       // Get students from the selected class
       const Class = await import("../models/Class.js").then(m => m.default);

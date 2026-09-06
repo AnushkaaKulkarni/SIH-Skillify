@@ -3,7 +3,7 @@
 import React from "react";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,25 +11,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sparkles, Eye, EyeOff } from "lucide-react";
 import { FaceRegistrationModal } from "./face-registration-modal";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { registerUser } from "@/lib/auth";
-import { useSubscription, SubscriptionPlanType } from "@/contexts/SubscriptionContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 
 export function StudentRegister() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { currentPlan } = useSubscription();
   const [step, setStep] = useState<"form" | "face">("form");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [educationLevel, setEducationLevel] = useState("");
+  const [designation, setDesignation] = useState("");
+  const [department, setDepartment] = useState("");
+  const [organization, setOrganization] = useState("");
+  const [jobRole, setJobRole] = useState("");
+  const [currentAssignment, setCurrentAssignment] = useState("");
+  const [qualification, setQualification] = useState("");
+  const [yearsOfExperience, setYearsOfExperience] = useState("");
+  const [previousTraining, setPreviousTraining] = useState("");
+  const [targetRole, setTargetRole] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -46,7 +46,18 @@ export function StudentRegister() {
         phone,
         password,
         role: "learner",
-        educationLevel,
+        designation,
+        department,
+        organization,
+        jobRole,
+        currentAssignment,
+        qualification,
+        yearsOfExperience: yearsOfExperience ? Number(yearsOfExperience) : undefined,
+        previousTraining: previousTraining
+          .split(",")
+          .map((training) => training.trim())
+          .filter(Boolean),
+        targetRole,
       });
 
       // ✅ VERY IMPORTANT
@@ -155,25 +166,58 @@ export function StudentRegister() {
               />
             </div>
 
-            {/* Education Level */}
+            {/* Workforce Profile */}
+            {[
+              ["designation", "Designation", designation, setDesignation],
+              ["department", "Department", department, setDepartment],
+              ["organization", "Organization", organization, setOrganization],
+              ["jobRole", "Job Role", jobRole, setJobRole],
+              ["currentAssignment", "Current Assignment", currentAssignment, setCurrentAssignment],
+              ["qualification", "Qualification", qualification, setQualification],
+              ["targetRole", "Target Role", targetRole, setTargetRole],
+            ].map(([id, label, value, setter]) => (
+              <div className="space-y-2" key={id as string}>
+                <Label htmlFor={id as string} className="text-sm font-medium text-foreground">
+                  {label as string}
+                </Label>
+                <Input
+                  id={id as string}
+                  type="text"
+                  value={value as string}
+                  onChange={(e) => (setter as React.Dispatch<React.SetStateAction<string>>)(e.target.value)}
+                  required
+                  className="h-10 border-border bg-background"
+                />
+              </div>
+            ))}
+
             <div className="space-y-2">
-              <Label
-                htmlFor="education"
-                className="text-sm font-medium text-foreground"
-              >
-                Education Level
+              <Label htmlFor="yearsOfExperience" className="text-sm font-medium text-foreground">
+                Years of Experience
               </Label>
-              <Select value={educationLevel} onValueChange={setEducationLevel}>
-                <SelectTrigger className="h-10 border-border bg-background">
-                  <SelectValue placeholder="Select your education level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="highschool">High School</SelectItem>
-                  <SelectItem value="bachelor">Bachelor's Degree</SelectItem>
-                  <SelectItem value="master">Master's Degree</SelectItem>
-                  <SelectItem value="phd">PhD</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input
+                id="yearsOfExperience"
+                type="number"
+                min="0"
+                value={yearsOfExperience}
+                onChange={(e) => setYearsOfExperience(e.target.value)}
+                required
+                className="h-10 border-border bg-background"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="previousTraining" className="text-sm font-medium text-foreground">
+                Previous Training
+              </Label>
+              <Input
+                id="previousTraining"
+                type="text"
+                placeholder="Separate multiple entries with commas"
+                value={previousTraining}
+                onChange={(e) => setPreviousTraining(e.target.value)}
+                className="h-10 border-border bg-background"
+              />
             </div>
 
             {/* Password */}
@@ -258,7 +302,14 @@ export function StudentRegister() {
                 !fullName ||
                 !email ||
                 !phone ||
-                !educationLevel ||
+                !designation ||
+                !department ||
+                !organization ||
+                !jobRole ||
+                !currentAssignment ||
+                !qualification ||
+                !yearsOfExperience ||
+                !targetRole ||
                 password.length < 6 ||
                 password !== confirmPassword
               }

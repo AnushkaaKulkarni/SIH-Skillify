@@ -14,28 +14,28 @@ const router = express.Router();
 router.get(
   "/scheduled",
   protect,
-  authorizeRoles("student"),
+  authorizeRoles("student", "learner"),
   getScheduledExamsForStudent
 );
 
 router.post(
   "/scheduled/:examId/start",
   protect,
-  authorizeRoles("student"),
+  authorizeRoles("student", "learner"),
   startScheduledExam
 );
 
 router.post(
   "/attempts/:attemptId/submit",
   protect,
-  authorizeRoles("student"),
+  authorizeRoles("student", "learner"),
   submitScheduledExam
 );
 
 router.get(
   "/attempts/:attemptId/result",
   protect,
-  authorizeRoles("student"),
+  authorizeRoles("student", "learner"),
   getScheduledExamResult
 );
 
