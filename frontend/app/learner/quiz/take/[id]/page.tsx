@@ -90,6 +90,9 @@ export default function ScheduledQuizTakePage() {
   const [timeLeft, setTimeLeft] = useState(0)
   const [attemptId, setAttemptId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitStep, setSubmitStep] = useState(0)
+  const [submitError, setSubmitError] = useState('')
   const [warningMsg, setWarningMsg] = useState<string | null>(null)
 
   const answersRef = useRef<any[]>([])
@@ -111,6 +114,9 @@ const lastFaceEventRef = useRef(0)
   ) => {
     if (!attemptId || isSubmittingRef.current) return
     isSubmittingRef.current = true
+    setSubmitting(true)
+    setSubmitError('')
+    setSubmitStep(1)
 
     try {
       console.log('Submitting scheduled quiz with reason:', reason)
@@ -142,6 +148,7 @@ const lastFaceEventRef = useRef(0)
 
       const data = await res.json()
       console.log('Submit successful:', data)
+      setSubmitStep(5)
 
       // Exit fullscreen before navigation
       if (document.fullscreenElement) {
@@ -159,7 +166,9 @@ const lastFaceEventRef = useRef(0)
     } catch (error) {
       console.error('Submit error:', error)
       isSubmittingRef.current = false
-      alert(`Failed to submit quiz:`)
+      setSubmitting(false)
+      setSubmitError(error instanceof Error ? error.message : 'Failed to submit assessment. Try again.')
+      setSubmitStep(0)
     }
   }
 
@@ -449,6 +458,19 @@ return (
       </div>
     )}
 
+    {submitStep > 0 && (
+      <Card className="border-blue-200 bg-blue-50 p-4 text-blue-900">
+        <p className="font-semibold">{submitStep === 5 ? 'Assessment complete. Preparing your results...' : 'Submitting assessment...'}</p>
+        <p className="text-sm">Server processing includes evaluation, competency update, and skill-gap recalculation.</p>
+        <ol className="mt-2 grid gap-1 text-xs sm:grid-cols-5">
+          {['Submit', 'Evaluate', 'Update competency', 'Recalculate gap', 'Complete'].map((label, index) => (
+            <li key={label} className={index + 1 <= submitStep ? 'font-semibold' : 'text-blue-600/60'}>{index + 1}/5 {label}</li>
+          ))}
+        </ol>
+      </Card>
+    )}
+    {submitError && <Card className="border-red-200 bg-red-50 p-4 text-red-700">{submitError}</Card>}
+
     <div className="flex justify-between items-center">
       <div className="flex gap-2 items-center">
         <Clock />
@@ -482,7 +504,7 @@ return (
       </Button>
 
       {currentQuestion === questions.length - 1 ? (
-        <Button onClick={() => submit()}>Submit</Button>
+        <Button disabled={submitting} onClick={() => submit()}>{submitting ? 'Submitting...' : 'Submit'}</Button>
       ) : (
         <Button onClick={() => setCurrentQuestion(c => c + 1)}>Next</Button>
       )}

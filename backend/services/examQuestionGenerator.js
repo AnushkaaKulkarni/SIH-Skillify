@@ -11,7 +11,7 @@ const generateExamQuestions = async ({
   subject,
 }) => {
   try {
-    const questions = await aiProvider.generateMCQs({
+    const result = await aiProvider.generateMCQs({
       subject: subject || "General",
       materialText: text,
       questions: totalQuestions || 10,
@@ -20,13 +20,14 @@ const generateExamQuestions = async ({
       questionType: "knowledge",
       sourceReference: "Exam Material",
     });
+    const questions = Array.isArray(result) ? result : result?.questions;
 
-    if (questions && questions.length > 0) {
+    if (Array.isArray(questions) && questions.length > 0) {
       return questions.map((q, index) => ({
         questionId: q.questionId || `q_${index + 1}`,
         question: q.question,
         options: q.options,
-        correctAnswer: q.correctAnswer,
+        correctAnswer: q.correctAnswer ?? q.correct,
         explanation: q.explanation,
         difficulty: q.difficulty,
       }));

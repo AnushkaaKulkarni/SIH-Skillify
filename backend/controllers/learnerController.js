@@ -1,5 +1,3 @@
-import InterviewSession from "../models/Interview.js";
-import FacultyOralAttempt from "../models/FacultyOralAttempt.js";
 import ExamAttempt from "../models/ExamAttempt.js";
 import QuizAttempt from "../models/QuizAttempt.js";
 import Recommendation from "../models/Recommendation.js";
@@ -77,49 +75,6 @@ export const getStudentDashboard = async (req, res) => {
       date: a.date,
     }));
 
-    /* ================= INTERVIEWS ================= */
-    const interviews = await InterviewSession.find({
-      student: learnerId,
-      status: "completed",
-    }).sort({ createdAt: -1 });
-
-    const totalInterviews = interviews.length;
-
-    const avgInterviewScore =
-      totalInterviews > 0
-        ? interviews.reduce((sum, i) => sum + (i.overallScore || 0), 0) /
-          totalInterviews
-        : 0;
-
-    const interviewTrend = [...interviews].reverse().map((i, index) => ({
-      attempt: index + 1,
-      score: i.overallScore || 0,
-      subject: i.subject,
-      date: i.createdAt,
-    }));
-
-    /* ================= FACULTY ORALS ================= */
-    const facultyOrals = await FacultyOralAttempt.find({
-      student: learnerId,
-      status: "completed",
-    }).sort({ createdAt: -1 });
-
-    const totalOrals = facultyOrals.length;
-
-    const avgOralScore =
-      totalOrals > 0
-        ? facultyOrals.reduce(
-            (sum, o) => sum + (o.overallScore || 0),
-            0
-          ) / totalOrals
-        : 0;
-
-    const oralTrend = [...facultyOrals].reverse().map((o, index) => ({
-      attempt: index + 1,
-      score: o.overallScore || 0,
-      date: o.createdAt,
-    }));
-
     /* ================= SUBJECT PERFORMANCE ================= */
     const subjectMap = {};
 
@@ -143,8 +98,6 @@ export const getStudentDashboard = async (req, res) => {
     let totalAverages = 0;
 
     if (totalQuizzes > 0) { totalAverages += avgQuizScore; categoriesWithData++; }
-    if (totalInterviews > 0) { totalAverages += avgInterviewScore; categoriesWithData++; }
-    if (totalOrals > 0) { totalAverages += avgOralScore; categoriesWithData++; }
 
     const overallAverage = categoriesWithData > 0 ? (totalAverages / categoriesWithData) : 0;
 
@@ -165,20 +118,6 @@ export const getStudentDashboard = async (req, res) => {
         score: a.score,
         date: a.date,
       })),
-      ...interviews.map((i) => ({
-        type: "Interview",
-        title: i.subject || "Interview",
-        subject: i.type || "Technical",
-        score: i.overallScore || 0,
-        date: i.createdAt,
-      })),
-      ...facultyOrals.map((o) => ({
-        type: "Oral",
-        title: "Faculty Oral",
-        subject: "Oral Examination",
-        score: o.overallScore || 0,
-        date: o.createdAt,
-      })),
     ]
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .slice(0, 6);
@@ -186,17 +125,11 @@ export const getStudentDashboard = async (req, res) => {
     /* ================= RESPONSE ================= */
     res.json({
       totalQuizzes,
-      totalInterviews,
-      totalOrals,
       avgQuizScore: Math.round(avgQuizScore),
-      avgInterviewScore: Math.round(avgInterviewScore),
-      avgOralScore: Math.round(avgOralScore),
       overallAverage: Math.round(overallAverage),
       passRate,
       streak: totalQuizzes > 0 ? 1 : 0, // Simplified streak representation based on active exams
       quizTrend,
-      interviewTrend,
-      oralTrend,
       subjectPerformance,
       recentActivity,
       profile: {

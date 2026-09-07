@@ -14,6 +14,7 @@ class OllamaProvider extends BaseAIProvider {
     super(config);
     this.baseUrl = config.baseUrl || process.env.OLLAMA_BASE_URL || "http://localhost:11434";
     this.modelName = config.model || process.env.OLLAMA_MODEL || "qwen2.5:7b";
+    this.timeoutMs = Number(config.timeoutMs || process.env.OLLAMA_TIMEOUT_MS || 300000);
     this.type = "private";
     
     // Ollama is optional - don't require it for startup
@@ -26,12 +27,14 @@ class OllamaProvider extends BaseAIProvider {
   async makeRequest(endpoint, payload) {
     try {
       const url = `${this.baseUrl}${endpoint}`;
+      const signal = AbortSignal.timeout(this.timeoutMs);
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
+        signal,
       });
       
       if (!response.ok) {
@@ -47,7 +50,10 @@ class OllamaProvider extends BaseAIProvider {
 
       return responseData;
     } catch (error) {
-      throw error;
+      if (error?.name === "TimeoutError" || error?.name === "AbortError") {
+        throw new Error(`Ollama request timed out after ${this.timeoutMs}ms`);
+      }
+      throw new Error(error?.message || "Ollama request failed");
     }
   }
 

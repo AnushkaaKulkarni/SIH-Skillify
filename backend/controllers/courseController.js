@@ -72,7 +72,7 @@ export const completeRecommendedCourse = async (req, res) => {
       {
         _id: req.params.id,
         user: req.user._id,
-        assessment: { $exists: false },
+        assessment: null,
         completionStatus: { $in: ["recommended", null] },
       },
       { $set: { completionStatus: "assessment_generating" } },
@@ -104,8 +104,8 @@ export const completeRecommendedCourse = async (req, res) => {
   } catch (error) {
     if (createdExam?._id) await Exam.deleteOne({ _id: createdExam._id }).catch(() => {});
     if (createdHistory?._id) await TrainingHistory.deleteOne({ _id: createdHistory._id }).catch(() => {});
-    if (claimedCourse?._id) await Course.updateOne({ _id: claimedCourse._id, assessment: { $exists: false } }, { $set: { completionStatus: "recommended" } }).catch(() => {});
-    res.status(503).json({ message: "Course assessment generation failed. Confirm the configured Ollama model is available.", error: error.message });
+    if (claimedCourse?._id) await Course.updateOne({ _id: claimedCourse._id, assessment: null }, { $set: { completionStatus: "recommended" } }).catch(() => {});
+    res.status(503).json({ message: error.message || "Course assessment generation failed. Confirm the configured Ollama model is available." });
   }
 };
 

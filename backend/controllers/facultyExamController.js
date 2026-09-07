@@ -72,7 +72,7 @@ export const createExamFromDoc = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Exam creation failed" });
+    res.status(503).json({ message: err.message || "Exam creation failed" });
   }
 };
 

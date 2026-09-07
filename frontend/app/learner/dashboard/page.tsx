@@ -24,7 +24,6 @@ import {
   Flame,
   TrendingUp,
   MessageSquare,
-  Mic,
   Brain,
   ClipboardList,
   Activity,
@@ -111,9 +110,7 @@ export default function LearnerDashboard() {
   }
 
   const performanceDistribution = [
-    { name: "Quiz", value: dashboardData.avgQuizScore || 0 },
-    { name: "Interview", value: dashboardData.avgInterviewScore || 0 },
-    { name: "Oral", value: dashboardData.avgOralScore || 0 },
+    { name: "Assessments", value: dashboardData.avgQuizScore || 0 },
   ];
 
   return (
@@ -133,7 +130,7 @@ export default function LearnerDashboard() {
         </div>
 
         {/* KPI SECTION */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="p-6 glass-morphism hover-lift group">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg group-hover:scale-110 transition-transform duration-300">
@@ -160,36 +157,6 @@ export default function LearnerDashboard() {
                   {dashboardData.totalQuizzes || 0}
                 </p>
                 <p className="text-xs text-muted-foreground">Total taken</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6 glass-morphism hover-lift group">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <MessageSquare className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground font-medium">Interviews</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {dashboardData.totalInterviews || 0}
-                </p>
-                <p className="text-xs text-muted-foreground">Completed</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6 glass-morphism hover-lift group">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-yellow-500 to-yellow-600 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Mic className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground font-medium">Faculty Orals</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {dashboardData.totalOrals || 0}
-                </p>
-                <p className="text-xs text-muted-foreground">Completed</p>
               </div>
             </div>
           </Card>
@@ -224,7 +191,7 @@ export default function LearnerDashboard() {
         </div>
 
         {/* TREND CHARTS */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           <Card className="p-6 glass-morphism hover-lift">
             <div className="flex items-center gap-2 mb-4">
               <Activity className="w-5 h-5 text-purple-600" />
@@ -250,55 +217,6 @@ export default function LearnerDashboard() {
             </ResponsiveContainer>
           </Card>
 
-          <Card className="p-6 glass-morphism hover-lift">
-            <div className="flex items-center gap-2 mb-4">
-              <MessageSquare className="w-5 h-5 text-blue-600" />
-              <h2 className="font-semibold text-foreground">Interview Trend</h2>
-            </div>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={dashboardData.interviewTrend || []}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="attempt" stroke="#6b7280" />
-                <YAxis domain={[0, 100]} stroke="#6b7280" />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="score"
-                  stroke="#06B6D4"
-                  strokeWidth={3}
-                  dot={{ fill: '#06B6D4', r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </Card>
-
-          <Card className="p-6 glass-morphism hover-lift">
-            <div className="flex items-center gap-2 mb-4">
-              <Mic className="w-5 h-5 text-green-600" />
-              <h2 className="font-semibold text-foreground">Oral Trend</h2>
-            </div>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={dashboardData.oralTrend || []}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="attempt" stroke="#6b7280" />
-                <YAxis domain={[0, 100]} stroke="#6b7280" />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="score"
-                  stroke="#10B981"
-                  strokeWidth={3}
-                  dot={{ fill: '#10B981', r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </Card>
         </div>
 
         {/* DISTRIBUTION + SUBJECT */}
@@ -467,27 +385,6 @@ export default function LearnerDashboard() {
             <Target className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
           </Button>
           
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => router.push("/learner/interview")}
-            className="border-2 hover:bg-accent/50 group"
-          >
-            <MessageSquare className="w-4 h-4 mr-2" />
-            Practice Interviews
-            <Target className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="lg"
-            onClick={() => router.push("/learner/oral")}
-            className="border-2 hover:bg-accent/50 group"
-          >
-            <Mic className="w-4 h-4 mr-2" />
-            Faculty Orals
-            <Target className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
-          </Button>
         </div>
       </div>
     </div>

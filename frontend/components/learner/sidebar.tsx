@@ -18,7 +18,13 @@ import {
   Lock,
 } from 'lucide-react'
 
-const menuItems = [
+const menuItems: Array<{
+  label: string
+  icon: typeof LayoutDashboard
+  href: string
+  feature: string
+  comingSoon?: boolean
+}> = [
   {
     label: 'Dashboard',
     icon: LayoutDashboard,

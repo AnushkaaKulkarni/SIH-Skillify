@@ -2,7 +2,7 @@ import axios from "axios";
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "qwen2.5:7b";
-const OLLAMA_TIMEOUT_MS = parseInt(process.env.OLLAMA_TIMEOUT_MS || "120000");
+const OLLAMA_TIMEOUT_MS = parseInt(process.env.OLLAMA_TIMEOUT_MS || "300000");
 
 /**
  * Ollama Provider for Local AI Generation
@@ -92,8 +92,9 @@ class OllamaProvider {
         },
       };
     } catch (error) {
-      console.error("Ollama Generation Error:", error.message);
-      throw new Error(`Ollama generation failed: ${error.message}`);
+      const message = error?.response?.data?.error || error?.message || error?.code || "Unknown Ollama error";
+      console.error("Ollama Generation Error:", message);
+      throw new Error(`Ollama generation failed: ${message}`);
     }
   }
 
@@ -133,8 +134,9 @@ class OllamaProvider {
         raw: response.data,
       };
     } catch (error) {
-      console.error("Ollama JSON Generation Error:", error.message);
-      throw new Error(`Ollama JSON generation failed: ${error.message}`);
+      const message = error?.response?.data?.error || error?.message || error?.code || "Unknown Ollama error";
+      console.error("Ollama JSON Generation Error:", message);
+      throw new Error(`Ollama JSON generation failed: ${message}`);
     }
   }
 
@@ -243,8 +245,9 @@ Generate the questions now:`;
 
       return response.data.questions;
     } catch (error) {
-      console.error("Ollama MCQ Generation Error:", error.message);
-      throw new Error(`Failed to generate MCQs: ${error.message}`);
+      const message = error?.response?.data?.error || error?.message || error?.code || "Unknown Ollama error";
+      console.error("Ollama MCQ Generation Error:", message);
+      throw new Error(`Failed to generate MCQs: ${message}`);
     }
   }
 }

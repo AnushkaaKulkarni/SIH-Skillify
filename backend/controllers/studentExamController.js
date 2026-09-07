@@ -2,8 +2,6 @@ import Exam from "../models/Exam.js";
 import ExamAttempt from "../models/ExamAttempt.js";
 import { recordResultHash } from "../services/hashVerificationService.js";
 import { updateCompetencyFromAssessment } from "../services/competencyEngine.js";
-import { getLearnerCompetencyOverview } from "../services/competencyEngine.js";
-import { scheduleFollowUpAssessment } from "../services/adaptiveAssessmentService.js";
 
 console.log("studentExamController loaded");
 
@@ -209,9 +207,6 @@ export const submitScheduledExam = async (req, res) => {
         answers: attempt.answers,
         source: "exam",
       });
-      const overview = await getLearnerCompetencyOverview(req.user);
-      // Scheduling failure must not roll back a completed, face-verified attempt.
-      await scheduleFollowUpAssessment({ user: req.user, sourceExamId: attempt.exam._id, overview }).catch((error) => console.error("Follow-up scheduling failed:", error.message));
     } catch (competencyError) {
       console.error("Competency evidence update failed:", competencyError.message);
     }
