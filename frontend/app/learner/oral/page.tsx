@@ -1,20 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Mic2 } from "lucide-react";
+import { useEffect } from "react";
+import { redirect } from "next/navigation";
+
+export default function OralPracticePage() {
+  useEffect(() => {
+    redirect("/learner/dashboard");
+  }, []);
+
+  return null;
+}
 
 export default function OralPracticePage() {
   const router = useRouter();

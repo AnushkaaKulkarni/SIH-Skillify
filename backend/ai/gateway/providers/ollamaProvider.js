@@ -179,13 +179,9 @@ class OllamaProvider extends BaseAIProvider {
       
       const data = await response.json();
       
-      // Check if the configured model is available (exact or family match)
+      // Check that the configured model tag is available.
       const models = data?.models || [];
-      const modelPrefix = this.modelName.split(":")[0];
-      const modelAvailable = models.length > 0 && (
-        models.some(m => m?.name === this.modelName) ||
-        models.some(m => m?.name?.includes(modelPrefix))
-      );
+      const modelAvailable = models.some(m => m?.name === this.modelName);
       
       const latency = Date.now() - startTime;
       

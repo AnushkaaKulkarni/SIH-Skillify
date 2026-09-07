@@ -29,13 +29,21 @@ export const registerUser = async (req, res) => {
       previousTraining,
     } = req.body;
 
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const normalizedPhone = String(phone || "").trim();
+    if (!String(fullName || "").trim() || !normalizedEmail || !normalizedPhone || !String(password || "").trim()) {
+      return res.status(400).json({ message: "Full name, email, phone number, and password are required." });
+    }
+    if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) return res.status(400).json({ message: "Enter a valid email address." });
+    if (String(password).length < 6) return res.status(400).json({ message: "Password must contain at least 6 characters." });
+
     const roleAliases = { student: "learner", faculty: "trainer" };
     const normalizedRole = roleAliases[role] || role;
     if (!["learner", "trainer", "admin"].includes(normalizedRole)) {
       return res.status(400).json({ message: "Role must be learner, trainer, or admin" });
     }
 
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ email: normalizedEmail });
     if (userExists) {
       return res.status(400).json({ message: "User already exists" });
     }
@@ -47,8 +55,8 @@ export const registerUser = async (req, res) => {
 
     const userData = {
       fullName,
-      email,
-      phone,
+      email: normalizedEmail,
+      phone: normalizedPhone,
       password: hashedPassword,
       role: normalizedRole,
       employeeId,
@@ -79,7 +87,19 @@ export const registerUser = async (req, res) => {
       // Admin doesn't need a specific ID field
     }
 
-    const user = await User.create(userData);
+    let user;
+    for (let attempt = 0; attempt < 3 && !user; attempt += 1) {
+      const roleId = generateRoleId(normalizedRole);
+      const candidate = { ...userData };
+      if (normalizedRole === "learner") {
+        candidate.studentId = roleId;
+        candidate.officialId = officialId || roleId;
+        candidate.faceVerified = false;
+      }
+      if (normalizedRole === "trainer") candidate.facultyId = roleId;
+      try { user = await User.create(candidate); }
+      catch (createError) { if (createError?.code !== 11000 || attempt === 2) throw createError; }
+    }
 
     // Identify relevant competencies without creating assessment evidence.
     if (normalizedRole === "learner") {
@@ -116,8 +136,11 @@ export const registerUser = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    console.error("Registration error:", error.message);
+    if (error?.code === 11000) return res.status(409).json({ message: "An account with this email or official ID already exists." });
+    if (error?.name === "ValidationError") return res.status(400).json({ message: Object.values(error.errors).map((item) => item.message).join(" ") });
+    if (error?.name === "MongooseServerSelectionError" || /buffering timed out|not connected/i.test(error?.message || "")) return res.status(503).json({ message: "Database is not connected. Please try again after the backend reports MongoDB connected." });
+    res.status(500).json({ message: "Registration could not be completed. Check the backend connection and logs." });
   }
 };
 

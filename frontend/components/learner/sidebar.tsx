@@ -8,8 +8,6 @@ import { FeatureTooltip } from '@/components/FeatureTooltip'
 import {
   LayoutDashboard,
   Brain,
-  Mic2,
-  Briefcase,
   Target,
   Bell,
   BookOpen,
@@ -28,21 +26,15 @@ const menuItems = [
     feature: 'Dashboard',
   },
   {
-    label: 'My Competencies',
-    icon: Brain,
-    href: '/learner/profile',
-    feature: 'Profile',
-  },
-  {
     label: 'Skill Gaps',
     icon: Target,
-    href: '/learner/profile',
+    href: '/learner/skill-gaps',
     feature: 'Profile',
   },
   {
-    label: 'Learning',
+    label: 'Courses',
     icon: BookOpen,
-    href: '/learner/certifications',
+    href: '/learner/courses',
     feature: 'Courses',
   },
   {
@@ -62,13 +54,6 @@ const menuItems = [
     icon: GraduationCap,
     href: '/learner/ai-tutor',
     feature: 'AI Tutor',
-  },
-  {
-    label: 'Recommendations',
-    icon: Sparkles,
-    href: '/learner/profile',
-    feature: 'Profile',
-    comingSoon: true,
   },
   {
     label: 'Notifications',
@@ -145,42 +130,6 @@ export function StudentSidebar() {
             )
           })}
 
-          <div className="mt-4 border-t border-sidebar-border pt-3">
-            <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Practice
-            </p>
-            {[
-              { label: 'Oral Practice', icon: Mic2, href: '/learner/oral', feature: 'Oral Practice' },
-              { label: 'Interview Practice', icon: Briefcase, href: '/learner/interview', feature: 'Interview' },
-            ].map((item) => {
-              const Icon = item.icon
-              const canAccess = hasFeature(item.feature, 'learner')
-
-              return (
-                <FeatureTooltip
-                  key={item.href}
-                  feature={item.feature}
-                  role="learner"
-                  isLocked={!canAccess}
-                >
-                  {canAccess ? (
-                    <Link
-                      href={item.href}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50"
-                    >
-                      <Icon className="w-5 h-5" />
-                      <span>{item.label}</span>
-                    </Link>
-                  ) : (
-                    <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground opacity-60">
-                      <Lock className="w-5 h-5" />
-                      <span>{item.label}</span>
-                    </div>
-                  )}
-                </FeatureTooltip>
-              )
-            })}
-          </div>
         </div>
       </nav>
 

@@ -7,13 +7,10 @@ import {
   LayoutDashboard,
   FileText,
   Upload,
-  Calendar,
   Users,
-  CheckCircle,
   User,
   LogOut,
   Sparkles,
-  AlertCircle,
   BookOpen,
   UserPlus,
 } from 'lucide-react'
@@ -42,24 +39,9 @@ const menuItems = [
     href: '/trainer/material-upload',
   },
   {
-    label: 'Oral Schedule',
-    icon: Calendar,
-    href: '/trainer/oral-schedule',
-  },
-  {
     label: 'View Learners',
     icon: Users,
     href: '/trainer/view-students',
-  },
-  {
-    label: 'Review',
-    icon: CheckCircle,
-    href: '/trainer/review',
-  },
-  {
-    label: 'Grievances',
-    icon: AlertCircle,
-    href: '/trainer/grievances',
   },
   {
     label: 'Profile',

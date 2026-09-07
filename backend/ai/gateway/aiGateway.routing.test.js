@@ -8,7 +8,7 @@ const makeStructuredResult = () => ({
   metadata: { model: "qwen3:8b" },
 });
 
-const privateProviderName = () => process.env.AI_PRIVATE_PROVIDER || "lmstudio";
+const privateProviderName = () => process.env.AI_PRIVATE_PROVIDER || "ollama";
 
 test("Category C routes only to the private provider", async () => {
   const privateProvider = aiGateway.getProvider(privateProviderName());

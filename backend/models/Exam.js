@@ -74,8 +74,12 @@ const examSchema = new mongoose.Schema({
   material: { type: mongoose.Schema.Types.ObjectId, ref: "Material" },
   assessmentType: { type: String, enum: ["STANDARD", "DIAGNOSTIC", "MATERIAL"], default: "STANDARD" },
   generatedByModel: String,
+  followUpFor: { type: mongoose.Schema.Types.ObjectId, ref: "Exam" },
+  trainingHistory: { type: mongoose.Schema.Types.ObjectId, ref: "TrainingHistory" },
   approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   approvedAt: Date,
 }, { timestamps: true });
+
+examSchema.index({ followUpFor: 1, assignedStudents: 1 }, { sparse: true });
 
 export default mongoose.model("Exam", examSchema);

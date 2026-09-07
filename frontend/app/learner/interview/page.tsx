@@ -1,19 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Briefcase, Play } from "lucide-react";
+import { useEffect } from "react";
+import { redirect } from "next/navigation";
+
+export default function InterviewPracticePage() {
+  useEffect(() => {
+    redirect("/learner/dashboard");
+  }, []);
+
+  return null;
+}
 
 interface InterviewSession {
   _id: string;

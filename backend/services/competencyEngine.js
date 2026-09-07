@@ -3,6 +3,7 @@ import Role from "../models/Role.js";
 import RoleCompetency from "../models/RoleCompetency.js";
 import UserCompetency from "../models/UserCompetency.js";
 import SkillGap from "../models/SkillGap.js";
+import CompetencyHistory from "../models/CompetencyHistory.js";
 
 export const COMPETENCY_UPDATE_WEIGHTS = Object.freeze({
   previous: 0.7,
@@ -161,6 +162,18 @@ export const updateCompetencyFromAssessment = async ({ user, questions, answers,
       },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     ).lean();
+
+    await CompetencyHistory.create({
+      user: user._id,
+      competency: item.competency,
+      previousScore: existing?.score ?? null,
+      previousLevel: existing?.currentLevel ?? null,
+      currentScore: score,
+      currentLevel: scoreToLevel(score),
+      source: source || "assessment",
+      requiredLevel: (await RoleCompetency.findOne({ role: { $in: await Role.find({ isActive: true }).distinct('_id') }, competency: item.competency }))?.requiredLevel ?? null,
+    });
+
     updated.push(record);
   }
 

@@ -12,12 +12,11 @@ import { useSubscription } from '@/contexts/SubscriptionContext'
 // Feature mapping for routes
 const routeFeatureMap: Record<string, string> = {
   '/learner/dashboard': 'Dashboard',
+  '/learner/skill-gaps': 'Profile',
   '/learner/quiz': 'AI Quiz',
   '/learner/code-editor': 'Code Editor',
   '/learner/exams': 'Exams',
   '/learner/marksheets': 'MarkSheets',
-  '/learner/oral': 'Oral Practice',
-  '/learner/interview': 'Interview',
   '/learner/certifications': 'Courses',
   '/learner/materials': 'Materials',
   '/learner/ai-tutor': 'AI Tutor',
