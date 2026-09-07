@@ -1,106 +1,85 @@
-# SkillifyAI – Project Setup
+# SkillifyAI
 
-Website Link=https://skillify-ai-project.vercel.app/
+SkillifyAI is an AI-assisted competency and assessment platform for official-statistics learning workflows. It combines a Next.js learner/trainer interface with an Express and MongoDB backend, role-based diagnostics, proctored assessments, competency evidence, skill-gap recommendations, learning materials, and optional blockchain result verification.
 
-This project contains both **frontend** and **backend** code.
+## Documentation
 
-Folder structure:
+Complete project documentation is available in [docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md).
 
-Skillify_AI  
-- backend  
-- frontend  
+## Quick Start
 
----
+Requirements:
 
-## Environment Variables
+- Node.js 18 or newer
+- MongoDB or MongoDB Atlas
+- Ollama with the configured Qwen model for quiz and diagnostic generation
 
-Each teammate must create their own `.env` files.
-Do NOT push `.env` files to GitHub.
+Install dependencies:
 
----
+```powershell
+cd backend
+npm install
+cd ..\frontend
+npm install
+```
 
-### Frontend `.env`
+Create `backend/.env` from [backend/.env.example](backend/.env.example), then set at least:
 
-For Local Development:
+```env
+PORT=5000
+CLIENT_URL=http://localhost:3000
+MONGODB_URI=<mongodb-connection-string>
+DB_NAME=skillify_sih
+JWT_SECRET=<strong-secret>
+AI_PRIVATE_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=qwen2.5:7b
+GEMINI_FALLBACK_ENABLED=false
+```
 
+Create `frontend/.env.local`:
+
+```env
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
+```
 
-### Backend `.env`
+Start Ollama, backend, and frontend in separate terminals:
 
-Create this file:
+```powershell
+ollama run qwen2.5:7b
+```
 
-backend/.env
+```powershell
+cd backend
+npm run dev
+```
 
-Add:
-PORT=5000  
-MONGODB_URI=your_new_mongodb_atlas_connection_string  
-DB_NAME=skillify_sih  
-JWT_SECRET=your_jwt_secret  
-JWT_EXPIRY=7d  
+```powershell
+cd frontend
+npm run dev
+```
 
-Replace `MONGODB_URI` with the connection string for the new MongoDB Atlas cluster. Do not reuse the old database.
+Open `http://localhost:3000`.
 
----
+## Useful Commands
 
-## Install Dependencies
+Backend:
 
-From the project root:
-### Backend
-cd backend  
-npm install  
+```powershell
+npm run dev
+npm start
+npm test
+npm run create-admin
+npm run seed:sih
+```
 
-### Frontend
-cd ../frontend  
-npm install  
+Frontend:
 
+```powershell
+npm run dev
+npm run type-check
+npm run build
+npm start
+```
 
-## Run the Project
-
-### Terminal 1 – Backend
-## Semester & Results (new)
-
-This project includes a semester-based workflow (admin → faculty → student) to manage exams and marksheets.
-
-- Backend endpoints (prefix `/api`):
-	- `POST /admin/semesters/create` — create a semester (admin)
-	- `GET /admin/semesters/list` — list semesters (admin)
-	- `POST /admin/semesters/:semesterId/assign-faculty-excel` — upload Excel (column `facultyID`) to assign faculty to semester (admin)
-	- `PATCH /admin/semesters/:semesterId/declare` — declare results for a semester (admin)
-	- `GET /admin/semesters/:semesterId/results` — fetch semester results (admin)
-	- `GET /admin/semesters/for-faculty` — semesters assigned to logged-in faculty (faculty)
-	- `PATCH /faculty/exams/:examId/assign-to-semester` — assign an approved exam to a semester (faculty)
-	- `GET /student/semesters` — list semesters for student selection (student)
-	- `GET /student/marksheets/:semesterId` — download/view student's marksheet (student; only after declare)
-
-- Frontend pages added/updated:
-	- Admin: `/admin` — Dashboard, Create Semester, Result Declare, View Results
-	- Faculty: `Assign to Semester` modal in exam creation flow
-	- Student: `/student/exams` and `/student/marksheets` pages; student quiz page now lists previous quiz reports
-
-Notes:
-- Excel uploads expect a `facultyID` column that maps to `User.facultyId` in the database.
-- Students will only see marksheets for a semester after the admin has declared results.
-cd backend  
-npm run dev  
-
-Backend runs on:
-http://localhost:5000
-
----
-
-### Terminal 2 – Frontend
-cd frontend  
-npm run dev  
-
-Frontend runs on:
-http://localhost:3000
-
----
-
-## Notes
-
-- Backend must be running before frontend
-- Do not commit `.env` or `node_modules`
-
-
-SkillifyAI Team
+Never commit `.env`, `.env.local`, credentials, private keys, or `node_modules`.

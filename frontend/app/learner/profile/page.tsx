@@ -14,6 +14,7 @@ export default function LearnerProfile() {
   const [formData, setFormData] = useState<any>(null);
   const [competencyOverview, setCompetencyOverview] = useState<any>(null);
   const [creatingDiagnostic, setCreatingDiagnostic] = useState(false);
+  const [diagnosticMessage, setDiagnosticMessage] = useState('');
   const router = useRouter();
 
   const startDiagnostic = async () => {
@@ -22,7 +23,7 @@ export default function LearnerProfile() {
       const response = await API.post("/ai/diagnostics", { questionCount: 10 });
       router.push(`/learner/quiz/take/${response.data.examId}`);
     } catch (error: any) {
-      alert(error.response?.data?.message || "The local diagnostic provider is unavailable.");
+      setDiagnosticMessage(error.response?.data?.message || "The local diagnostic provider is unavailable. Retry when it is ready.");
     } finally { setCreatingDiagnostic(false); }
   };
 
@@ -240,9 +241,10 @@ export default function LearnerProfile() {
         </p>
       </div>
       <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-indigo-950">Complete the local-AI diagnostic to establish evidence-based competency scores. Self-declared profile information is not scored.</p>
+        <p className="text-sm text-indigo-950">Complete the role-based diagnostic to establish evidence-based competency scores. Self-declared profile information is not scored.</p>
         <Button onClick={startDiagnostic} disabled={creatingDiagnostic}>{creatingDiagnostic ? "Preparing…" : "Start diagnostic"}</Button>
       </div>
+      {diagnosticMessage && <p className="text-sm text-red-700">{diagnosticMessage}</p>}
       {!competencyOverview?.competencies?.length ? (
         <p className="text-sm text-gray-600">No official role competency mapping is configured yet.</p>
       ) : (

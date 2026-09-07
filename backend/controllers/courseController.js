@@ -2,7 +2,7 @@ import axios from "axios";
 import Course from "../models/Course.js";
 import Recommendation from "../models/Recommendation.js";
 import { getLearnerCompetencyOverview } from "../services/competencyEngine.js";
-import { discoverCourses } from "../services/courseDiscoveryService.js";
+import { discoverCourses, normalizeResourceUrl } from "../services/courseDiscoveryService.js";
 import Competency from "../models/Competency.js";
 import TrainingHistory from "../models/TrainingHistory.js";
 import Exam from "../models/Exam.js";
@@ -47,6 +47,13 @@ export const getRecommendedCourses = async (req, res) => {
     const overview = await getLearnerCompetencyOverview(req.user);
     const open = (overview.competencies || []).filter((item) => item.gap?.status === "open").sort((a, b) => (b.gap?.gap || 0) - (a.gap?.gap || 0)).slice(0, 5);
     const persisted = await Course.find({ user: req.user._id, competency: { $in: open.map((item) => item.competency._id) } }).lean();
+    await Promise.all(persisted.map(async (course) => {
+      const normalizedLink = normalizeResourceUrl(course.link, course.title, course.competency?.name || "");
+      if (normalizedLink !== course.link) {
+        course.link = normalizedLink;
+        await Course.updateOne({ _id: course._id }, { $set: { link: normalizedLink } });
+      }
+    }));
     const existing = new Set(persisted.map((item) => `${item.competency}:${item.link}`));
     const created = [];
     for (const item of open) {

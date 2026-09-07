@@ -17,7 +17,6 @@ export const createExamFromDoc = async (req, res) => {
       title,
       description,
       subject,
-      difficulty,
       duration,
       totalQuestions,
     } = req.body;
@@ -39,7 +38,7 @@ export const createExamFromDoc = async (req, res) => {
     const generatedQuestions = await generateExamQuestions({
   text: extractedText,                 // 🔥 SYLLABUS
   totalQuestions: Number(totalQuestions),
-  difficulty,
+  difficulty: "mixed",
   subject,
 });
 
@@ -48,7 +47,7 @@ export const createExamFromDoc = async (req, res) => {
       title,
       description,
       subject,
-      difficulty,
+      difficulty: "mixed",
       duration,
       totalQuestions,
       faculty: req.user._id,

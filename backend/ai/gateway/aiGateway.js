@@ -60,8 +60,8 @@ class AIGateway {
   /**
    * Check if private provider is available
    */
-  async isPrivateProviderAvailable() {
-    const privateProvider = this.getProvider(process.env.AI_PRIVATE_PROVIDER || "ollama");
+  async isPrivateProviderAvailable(providerName = process.env.AI_PRIVATE_PROVIDER || "ollama") {
+    const privateProvider = this.getProvider(providerName);
     if (!privateProvider) return false;
     
     try {
@@ -107,7 +107,8 @@ class AIGateway {
     const startTime = Date.now();
     
     // Step 1: Evaluate AI policy
-    const privateProviderAvailable = await this.isPrivateProviderAvailable();
+    const privateProviderName = request.preferredProvider || process.env.AI_PRIVATE_PROVIDER || "ollama";
+    const privateProviderAvailable = await this.isPrivateProviderAvailable(privateProviderName);
     
     const policyDecision = evaluateAIClassification({
       classification: request.classification,
@@ -147,7 +148,7 @@ class AIGateway {
     
     if (processingMode === "private" || request.forcePrivate === true) {
       // Policy requires private processing
-      provider = this.getProvider(process.env.AI_PRIVATE_PROVIDER || "ollama");
+      provider = this.getProvider(request.preferredProvider || process.env.AI_PRIVATE_PROVIDER || "ollama");
       
       if (!provider) {
         const latency = Date.now() - startTime;

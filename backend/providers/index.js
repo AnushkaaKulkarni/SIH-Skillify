@@ -114,18 +114,7 @@ class AIProvider {
       };
     } catch (ollamaError) {
       console.error("Ollama MCQ generation failed:", ollamaError.message);
-      
-      if (this.fallbackEnabled) {
-        console.log("Falling back to Gemini for MCQ generation...");
-        try {
-          return await this.generateMCQsWithGemini(params);
-        } catch (geminiError) {
-          console.error("Gemini MCQ fallback also failed:", geminiError.message);
-          throw new Error("All AI providers failed for MCQ generation");
-        }
-      } else {
-        throw new Error(`Ollama unavailable for MCQ generation and fallback disabled: ${ollamaError.message}`);
-      }
+      throw new Error(`Ollama unavailable for MCQ generation: ${ollamaError.message}`);
     }
   }
 

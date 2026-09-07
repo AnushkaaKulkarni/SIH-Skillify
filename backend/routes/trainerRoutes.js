@@ -326,7 +326,7 @@ router.get(
   authorizeRoles("trainer", "faculty"),
   async (req, res) => {
     const faculty = await User.findById(req.user._id)
-      .populate("students", "fullName studentId");
+      .populate("students", "fullName email phone studentId designation targetRole parents");
 
     res.json(faculty.students);
   }

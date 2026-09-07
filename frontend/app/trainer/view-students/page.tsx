@@ -254,6 +254,40 @@ export default function ViewStudentsPage() {
           </div>
         </div>
 
+        <div className="space-y-3">
+          <div>
+            <h3 className="text-xl font-semibold text-gray-700">Competency Status</h3>
+            <p className="text-sm text-muted-foreground">Role: {selectedStudent.competencyOverview?.targetRole || selectedStudent.targetRole || "Not configured"}</p>
+          </div>
+          <div className="overflow-x-auto border rounded-lg">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50">
+                <tr className="border-b">
+                  <th className="text-left p-3">Competency</th>
+                  <th className="text-left p-3">Required</th>
+                  <th className="text-left p-3">Current Score</th>
+                  <th className="text-left p-3">Gap</th>
+                  <th className="text-left p-3">Status</th>
+                  <th className="text-left p-3">Last Assessed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(selectedStudent.competencyOverview?.competencies || []).map((item: any) => (
+                  <tr key={item.competency?._id} className="border-b last:border-0">
+                    <td className="p-3 font-medium">{item.competency?.name}</td>
+                    <td className="p-3">Level {item.requiredLevel}</td>
+                    <td className="p-3">{item.current?.score == null ? "Not Assessed" : `${item.current.score}%`}</td>
+                    <td className="p-3">{item.gap?.gap > 0 ? `Level ${item.gap.gap}` : 0}</td>
+                    <td className="p-3 capitalize">{item.current?.score == null ? "Not Assessed" : item.gap?.status}</td>
+                    <td className="p-3">{item.current?.assessedAt ? new Date(item.current.assessedAt).toLocaleDateString() : "Not Assessed"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {!selectedStudent.competencyOverview?.competencies?.length && <p className="p-4 text-sm text-muted-foreground">No competencies are mapped to this learner's role.</p>}
+          </div>
+        </div>
+
         {/* Parents Section */}
         {selectedStudent.parents &&
           selectedStudent.parents.length > 0 && (

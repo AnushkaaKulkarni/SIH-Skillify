@@ -2,11 +2,11 @@ import Material from "../models/Material.js";
 import Exam from "../models/Exam.js";
 import User from "../models/User.js";
 import cloudinary from "../config/cloudinary.js";
-import { normalizeClassification } from "../config/aiPolicy.js";
 import { generateQuizQuestions } from "../services/quizGenerationService.js";
 import extractTextFromUrl from "../utils/extractText.js";
 import { extractTextFromUploadedFile } from "../utils/extractText.js";
 import Competency from "../models/Competency.js";
+import { getLearnerCompetencyOverview } from "../services/competencyEngine.js";
 
 const createChunks = (text, fileName) => String(text || "").replace(/\s+/g, " ").trim().match(/.{1,1200}(?:\s|$)/g)?.map((chunk, index) => ({
   index, text: chunk.trim(), sourceReference: `${fileName} — chunk ${index + 1}`,
@@ -26,25 +26,8 @@ export const uploadMaterial = async (req, res) => {
       sendType,
       selectedStudents,
       assignedClass,
-      classification,
-      classificationSource,
-      classificationReason,
-      externalAIAllowed,
       competencyIds,
     } = req.body;
-    
-    const normalizedClassification = normalizeClassification(classification || "UNKNOWN");
-    const classificationScheme = classificationSource === "MOSPI_GSDD_2026" ? "MOSPI_GSDD_2026" : 
-                              classificationSource === "ORGANIZATION_POLICY" ? "ORGANIZATION_POLICY" :
-                              classificationSource === "SOURCE_AUTHORITY_POLICY" ? "SOURCE_AUTHORITY_POLICY" :
-                              classificationSource === "DOCUMENT_OWNER" ? "DOCUMENT_OWNER" : "UNKNOWN";
-    
-    // Default-deny: if classification is UNKNOWN, external AI is not allowed
-    const allowExternalAI = (normalizedClassification === "UNKNOWN" || normalizedClassification === "UNCLASSIFIED")
-      ? false
-      : externalAIAllowed === undefined
-        ? normalizedClassification === "CATEGORY_A_OPEN_ACCESS" || normalizedClassification === "PUBLIC"
-        : externalAIAllowed === true || externalAIAllowed === "true";
 
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ message: "No files uploaded" });
@@ -135,13 +118,6 @@ export const uploadMaterial = async (req, res) => {
         scope: sendType,
         students: studentsList,
         assignedClass: classId,
-        classification: normalizedClassification,
-        classificationScheme,
-        classificationSource,
-        classificationReason,
-        classifiedBy: req.user._id,
-        classifiedAt: new Date(),
-        externalAIAllowed: allowExternalAI,
         competencies: validCompetencies.map((item) => item._id),
         processingStatus: "PROCESSING",
       });
@@ -179,7 +155,7 @@ export const getFacultyMaterials = async (req, res) => {
   try {
     const materials = await Material.find({ faculty: req.user._id })
       .sort({ createdAt: -1 })
-      .select("title description fileName fileType classification classificationSource competencies processingStatus processingError createdAt")
+      .select("title description fileName fileType competencies processingStatus processingError createdAt")
       .lean();
 
     res.json(materials);
@@ -199,7 +175,7 @@ export const getFacultyStudents = async (req, res) => {
     const administrator = await User.findById(req.user._id)
       .populate({
   path: "students",
-  select: "fullName email phone studentId parents",
+  select: "fullName email phone studentId designation targetRole parents",
   populate: {
     path: "parents",
     select: "fullName email phone parentId",
@@ -207,7 +183,12 @@ export const getFacultyStudents = async (req, res) => {
 });
 
 
-    res.json(administrator.students);
+    const students = await Promise.all(administrator.students.map(async (student) => ({
+      ...student.toObject(),
+      competencyOverview: await getLearnerCompetencyOverview(student),
+    })));
+
+    res.json(students);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to fetch government officials" });
@@ -285,9 +266,10 @@ export const generateQuizFromMaterial = async (req, res) => {
 
     if (material.processingStatus !== "READY") return res.status(409).json({ message: `Material is ${material.processingStatus.toLowerCase()}.` });
     const selectedIds = Array.isArray(competencyIds) && competencyIds.length ? competencyIds : material.competencies;
-    const competencies = await Competency.find({ _id: { $in: selectedIds } }).select("name domain").lean();
-    if (!competencies.length) return res.status(400).json({ message: "Select at least one valid competency before generating questions." });
-    const chunks = selectRelevantChunks(material.chunks || [], competencies);
+    const competencies = await Competency.find({ _id: { $in: selectedIds || [] } }).select("name domain").lean();
+    const chunks = competencies.length
+      ? selectRelevantChunks(material.chunks || [], competencies)
+      : (material.chunks || []).slice(0, 8);
     const extractedText = chunks.map((chunk) => `[${chunk.sourceReference}] ${chunk.text}`).join("\n\n") || await extractTextFromUrl(material.filePath, material.fileName);
 
     // Generate quiz using AI Gateway
@@ -295,10 +277,7 @@ export const generateQuizFromMaterial = async (req, res) => {
       subject: material.description || material.title,
       materialText: extractedText,
       questions: questionCount || 10,
-      difficulty: difficulty || "medium",
-      classification: material.classification,
-      classificationSource: material.classificationSource,
-      externalAIAllowed: material.externalAIAllowed,
+      difficulty: "mixed",
       allowFallback: false,
       competencyIds: competencies.map((item) => item._id),
       targetProficiencyLevel,

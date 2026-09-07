@@ -60,21 +60,22 @@ export const generateQuizQuestions = async ({
   subject,
   materialText = "",
   questions,
-  difficulty,
-  classification = "CATEGORY_A_OPEN_ACCESS",
-  classificationSource = "MOSPI_GSDD_2026",
-  externalAIAllowed = true,
-  allowFallback = true,
+  difficulty = "mixed",
+  classification,
+  classificationSource,
+  externalAIAllowed,
+  allowFallback = false,
   competencyIds = [],
   targetProficiencyLevel = 3,
   questionType = "knowledge",
   sourceReference = "",
 }) => {
   const safeCount = Math.max(1, toNumber(questions, 10));
-  const safeDifficulty = String(difficulty || "mixed").toLowerCase();
+  const safeDifficulty = "mixed";
   const safeSubject = String(subject || "general").trim();
 
-  const sourceText = String(materialText || subject).slice(0, 30000);
+  const sourceText = String(materialText || subject).replace(/\s+/g, " ").trim().slice(0, 12000);
+  const maxTokens = Math.min(4096, Math.max(1024, safeCount * 300));
   const prompt = `
 Generate ${safeCount} competency-aware multiple-choice questions strictly based on:
 "${safeSubject}"
@@ -82,7 +83,7 @@ Generate ${safeCount} competency-aware multiple-choice questions strictly based 
 Source material:
 ${sourceText}
 
-Difficulty: ${safeDifficulty}; target proficiency level: ${targetProficiencyLevel}; type: ${questionType}.
+Difficulty: mixed; include a balanced mix of easy, medium, and hard questions; target proficiency level: ${targetProficiencyLevel}; type: ${questionType}.
 Allowed competency IDs: ${competencyIds.map(String).join(", ")}
 
 Rules:
@@ -114,20 +115,22 @@ Rules:
     const aiResponse = await aiGateway.generateStructured({
       capability: "competency_assessment_generation",
       content: prompt,
-      classification,
-      classificationSource,
+      classification: classification || "CATEGORY_A_OPEN_ACCESS",
+      classificationSource: classificationSource || "ORGANIZATION_POLICY",
       externalAIAllowed: false,
       forcePrivate: true,
+      preferredProvider: "ollama",
       systemPrompt: "You generate grounded competency assessment questions. Return JSON only.",
       schema: { questions: "array" },
-      maxTokens: 4096,
+      maxTokens,
       temperature: 0.2,
     });
 
     if (aiResponse.success && Array.isArray(aiResponse.data?.questions)) {
       const validated = await validateGeneratedQuestions(aiResponse.data.questions, { 
         allowedCompetencyIds: competencyIds, 
-        defaultCompetencyId: competencyIds[0], 
+        defaultCompetencyId: competencyIds[0],
+        requireCompetency: competencyIds.length > 0,
         defaultLevel: targetProficiencyLevel, 
         sourceReference 
       });
@@ -151,10 +154,7 @@ Rules:
     console.error("AI Provider error:", error.message);
   }
 
-  if (competencyIds.length) throw new Error("Competency-aware generation failed validation; no draft was saved.");
-  // absolute last safety net for legacy generic quizzes only
-  console.warn("Using generic fallback questions");
-  return genericFallback(safeCount);
+    throw new Error("AI quiz generation failed validation; no draft was saved.");
 };
 
 export default generateQuizQuestions;

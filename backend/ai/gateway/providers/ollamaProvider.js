@@ -15,6 +15,8 @@ class OllamaProvider extends BaseAIProvider {
     this.baseUrl = config.baseUrl || process.env.OLLAMA_BASE_URL || "http://localhost:11434";
     this.modelName = config.model || process.env.OLLAMA_MODEL || "qwen2.5:7b";
     this.timeoutMs = Number(config.timeoutMs || process.env.OLLAMA_TIMEOUT_MS || 300000);
+    this.contextSize = Number(config.contextSize || process.env.OLLAMA_NUM_CTX || 4096);
+    this.keepAlive = config.keepAlive || process.env.OLLAMA_KEEP_ALIVE || "10m";
     this.type = "private";
     
     // Ollama is optional - don't require it for startup
@@ -71,9 +73,11 @@ class OllamaProvider extends BaseAIProvider {
         model: this.modelName,
         messages,
         stream: false,
+        keep_alive: this.keepAlive,
         options: {
           temperature,
           num_predict: maxTokens,
+          num_ctx: this.contextSize,
         },
       };
       
@@ -122,9 +126,11 @@ class OllamaProvider extends BaseAIProvider {
         messages,
         stream: false,
         format: "json", // Request JSON format from Ollama
+        keep_alive: this.keepAlive,
         options: {
           temperature,
           num_predict: maxTokens,
+          num_ctx: this.contextSize,
         },
       };
       

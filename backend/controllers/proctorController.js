@@ -1,4 +1,5 @@
 import QuizAttempt from "../models/QuizAttempt.js"
+import ExamAttempt from "../models/ExamAttempt.js"
 import User from "../models/User.js"
 import { isFaceMatch } from "../services/faceMatchService.js"
 import { updateCompetencyFromAssessment } from "../services/competencyEngine.js"
@@ -6,13 +7,17 @@ import { updateCompetencyFromAssessment } from "../services/competencyEngine.js"
 export const faceCheck = async (req, res) => {
   try {
     const { attemptId, embedding, answers } = req.body
-    const attempt = await QuizAttempt.findById(attemptId)
+    const quizAttempt = await QuizAttempt.findById(attemptId)
+    const examAttempt = quizAttempt ? null : await ExamAttempt.findById(attemptId).populate("exam")
+    const attempt = quizAttempt || examAttempt
 
     if (!attempt || attempt.isFinalized) {
-      return res.json({ autoSubmitted: true })
+      return res.json({ autoSubmitted: Boolean(attempt?.status === "AUTO_SUBMITTED" || attempt?.isFinalized) })
     }
 
     const now = Date.now()
+
+    if (examAttempt && !attempt.proctoring) attempt.proctoring = {}
 
     let facePresent = true
 
@@ -31,8 +36,10 @@ export const faceCheck = async (req, res) => {
 
     // 🙂 FACE IS PRESENT
     if (facePresent) {
-      attempt.noFaceSince = null
-      attempt.lastFaceWarningAt = null
+      if (quizAttempt) {
+        attempt.noFaceSince = null
+        attempt.lastFaceWarningAt = null
+      }
       await attempt.save()
 
       return res.json({
@@ -43,28 +50,32 @@ export const faceCheck = async (req, res) => {
     }
 
     // 🫥 FACE NOT PRESENT
-    if (!attempt.noFaceSince) {
+    if (quizAttempt && !attempt.noFaceSince) {
       attempt.noFaceSince = new Date(now)
     }
 
-    const noFaceDuration = now - new Date(attempt.noFaceSince).getTime()
+    const noFaceDuration = quizAttempt ? now - new Date(attempt.noFaceSince).getTime() : 3000;
 
     // ⚠️ first warning at 2 sec
     if (noFaceDuration >= 2000) {
-      const lastWarn = attempt.lastFaceWarningAt
+      const lastWarn = quizAttempt && attempt.lastFaceWarningAt
         ? new Date(attempt.lastFaceWarningAt).getTime()
         : 0
 
       // ⏳ cooldown: 8 sec between warnings
-      if (!attempt.lastFaceWarningAt || now - lastWarn >= 8000) {
-        attempt.warnings.face += 1
-        attempt.lastFaceWarningAt = new Date(now)
+      if (!quizAttempt || !attempt.lastFaceWarningAt || now - lastWarn >= 8000) {
+        if (quizAttempt) {
+          attempt.warnings.face += 1
+          attempt.lastFaceWarningAt = new Date(now)
+        } else {
+          attempt.proctoring.faceWarnings = (attempt.proctoring.faceWarnings || 0) + 1
+        }
       }
     }
 
     const totalWarnings =
-      Number(attempt.warnings.tab || 0) +
-      Number(attempt.warnings.face || 0)
+      Number(quizAttempt ? attempt.warnings.tab || 0 : 0) +
+      Number(quizAttempt ? attempt.warnings.face || 0 : attempt.proctoring.faceWarnings || 0)
 
     if (totalWarnings >= 3) {
       if (Array.isArray(answers)) {
@@ -73,7 +84,7 @@ export const faceCheck = async (req, res) => {
 
       attempt.status = "AUTO_SUBMITTED"
       attempt.submittedAt = new Date()
-      attempt.isFinalized = true
+      if (quizAttempt) attempt.isFinalized = true
       attempt.submitReason = "PROCTOR_VIOLATION"
       attempt.submissionType = "AUTO"
     }
@@ -85,9 +96,9 @@ export const faceCheck = async (req, res) => {
         const user = await User.findById(attempt.student)
         await updateCompetencyFromAssessment({
           user,
-          questions: attempt.questions,
+          questions: examAttempt?.exam?.questions || attempt.questions,
           answers: attempt.answers,
-          source: "proctored-quiz",
+          source: examAttempt?.exam?.assessmentType === "DIAGNOSTIC" ? "initial-diagnostic" : "proctored-quiz",
         })
       } catch (competencyError) {
         console.error("Competency evidence update failed:", competencyError.message)

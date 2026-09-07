@@ -70,9 +70,24 @@ export function StudentRegister() {
     }
   };
 
-  const handleFaceVerified = () => {
+  const handleFaceVerified = async () => {
     setFaceVerified(true);
-    router.push("/learner/dashboard");
+    try {
+      const diagnostic = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/diagnostics`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ questionCount: 10 }),
+      });
+      const data = await diagnostic.json();
+      if (!diagnostic.ok) throw new Error(data.message || "Initial diagnostic generation failed");
+      router.push(`/learner/quiz/take/${data.examId}`);
+    } catch (error: any) {
+      alert(error.message || "Initial diagnostic generation failed. You can retry it from your profile.");
+      router.push("/learner/profile");
+    }
   };
 
   if (step === "face") {

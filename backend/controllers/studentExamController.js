@@ -205,7 +205,7 @@ export const submitScheduledExam = async (req, res) => {
         user: req.user,
         questions: attempt.exam.questions,
         answers: attempt.answers,
-        source: "exam",
+        source: attempt.exam.assessmentType === "DIAGNOSTIC" ? "initial-diagnostic" : "exam",
       });
     } catch (competencyError) {
       console.error("Competency evidence update failed:", competencyError.message);

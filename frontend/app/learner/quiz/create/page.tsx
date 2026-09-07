@@ -22,7 +22,6 @@ export default function CreateQuizPage() {
   const [subject, setSubject] = useState('')
   const [timeLimit, setTimeLimit] = useState('30')
   const [numberOfQuestions, setNumberOfQuestions] = useState('20')
-  const [difficulty, setDifficulty] = useState('mixed')
   const [isGenerating, setIsGenerating] = useState(false)
 
   const handleStartQuiz = () => {
@@ -35,8 +34,7 @@ export default function CreateQuizPage() {
         `/learner/quiz/take/custom` +
           `?subject=${encodeURIComponent(subject)}` +
           `&time=${timeLimit}` +
-          `&questions=${numberOfQuestions}` +
-          `&difficulty=${difficulty}`
+          `&questions=${numberOfQuestions}`
       )
       setIsGenerating(false)
     }, 800)
@@ -128,22 +126,6 @@ export default function CreateQuizPage() {
                     <SelectItem value="20">20 questions</SelectItem>
                     <SelectItem value="25">25 questions</SelectItem>
                     <SelectItem value="30">30 questions</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Difficulty */}
-              <div className="space-y-2">
-                <Label>Difficulty Level</Label>
-                <Select value={difficulty} onValueChange={setDifficulty}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
-                    <SelectItem value="mixed">Mixed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

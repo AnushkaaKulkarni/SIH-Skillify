@@ -6,13 +6,6 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Upload, FileText, Sparkles, AlertCircle, CheckCircle } from 'lucide-react'
 import API from "@/lib/api"
 
@@ -21,10 +14,10 @@ export default function TrainerMaterialsPage() {
   const [loading, setLoading] = useState(true)
   const [selectedMaterial, setSelectedMaterial] = useState<any>(null)
   const [questionCount, setQuestionCount] = useState(10)
-  const [difficulty, setDifficulty] = useState('medium')
   const [generating, setGenerating] = useState(false)
   const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([])
   const [error, setError] = useState('')
+  const [generationStep, setGenerationStep] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -48,15 +41,18 @@ export default function TrainerMaterialsPage() {
     setGenerating(true)
     setError('')
     setGeneratedQuestions([])
+    setGenerationStep('1/3 Preparing material')
 
     try {
+      setGenerationStep('2/3 Qwen generating')
       const res = await API.post("/trainer/generate-quiz-from-material", {
         materialId: selectedMaterial._id,
         questionCount,
-        difficulty,
+        difficulty: 'mixed',
       })
 
       if (res.data.success) {
+        setGenerationStep('3/3 Validating questions')
         setGeneratedQuestions(res.data.questions)
       } else {
         setError(res.data.message || 'Quiz generation failed')
@@ -66,6 +62,7 @@ export default function TrainerMaterialsPage() {
       setError(err.response?.data?.message || err.message || 'Quiz generation failed')
     } finally {
       setGenerating(false)
+      setGenerationStep('')
     }
   }
 
@@ -78,38 +75,12 @@ export default function TrainerMaterialsPage() {
         questions: generatedQuestions,
         title: selectedMaterial.title,
         subject: selectedMaterial.description || selectedMaterial.title,
-        difficulty,
+        difficulty: 'mixed',
       })
       router.push(`/trainer/create-exam?examId=${res.data.examId}`)
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to save assessment')
     }
-  }
-
-  const getClassificationLabel = (classification: string) => {
-    const labels: Record<string, string> = {
-      'CATEGORY_A_OPEN_ACCESS': 'Category A — Open Access',
-      'CATEGORY_B_REGISTERED_ACCESS': 'Category B — Registered Access',
-      'CATEGORY_C_RESTRICTED_ACCESS': 'Category C — Restricted Access',
-      'NON_SHAREABLE': 'Non-Shareable',
-      'PUBLIC': 'Public (Legacy)',
-      'INTERNAL': 'Internal (Legacy)',
-      'UNKNOWN': 'Unknown',
-    }
-    return labels[classification] || classification
-  }
-
-  const getClassificationColor = (classification: string) => {
-    const colors: Record<string, string> = {
-      'CATEGORY_A_OPEN_ACCESS': 'bg-green-100 text-green-800 border-green-200',
-      'CATEGORY_B_REGISTERED_ACCESS': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'CATEGORY_C_RESTRICTED_ACCESS': 'bg-red-100 text-red-800 border-red-200',
-      'NON_SHAREABLE': 'bg-gray-100 text-gray-800 border-gray-300',
-      'PUBLIC': 'bg-green-100 text-green-800 border-green-200',
-      'INTERNAL': 'bg-blue-100 text-blue-800 border-blue-200',
-      'UNKNOWN': 'bg-gray-100 text-gray-800 border-gray-300',
-    }
-    return colors[classification] || 'bg-gray-100 text-gray-800 border-gray-300'
   }
 
   if (loading) {
@@ -182,11 +153,6 @@ export default function TrainerMaterialsPage() {
                           </span>
                         </div>
                       </div>
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-medium border ${getClassificationColor(material.classification)}`}
-                      >
-                        {getClassificationLabel(material.classification)}
-                      </span>
                     </div>
                   </div>
                 ))}
@@ -210,11 +176,6 @@ export default function TrainerMaterialsPage() {
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <h3 className="font-medium text-gray-900">{selectedMaterial.title}</h3>
                   <p className="text-sm text-gray-600 mt-1">{selectedMaterial.description}</p>
-                  <div className="mt-2">
-                    <span className={`inline-block px-2 py-1 rounded text-xs font-medium border ${getClassificationColor(selectedMaterial.classification)}`}>
-                      {getClassificationLabel(selectedMaterial.classification)}
-                    </span>
-                  </div>
                 </div>
 
                 <div className="space-y-3">
@@ -229,33 +190,6 @@ export default function TrainerMaterialsPage() {
                     />
                   </div>
 
-                  <div>
-                    <Label>Difficulty</Label>
-                    <Select value={difficulty} onValueChange={setDifficulty}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="easy">Easy</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="hard">Hard</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {['CATEGORY_C_RESTRICTED_ACCESS', 'NON_SHAREABLE'].includes(selectedMaterial.classification) && (
-                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <div className="flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium text-yellow-800">AI Generation Restricted</p>
-                          <p className="text-xs text-yellow-700 mt-1">
-                            Generating assessment using approved private AI processing.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   <Button
                     onClick={handleGenerateQuiz}
@@ -265,7 +199,7 @@ export default function TrainerMaterialsPage() {
                     {generating ? (
                       <>
                         <Sparkles className="w-4 h-4 mr-2 animate-spin" />
-                        Generating...
+                        {generationStep}
                       </>
                     ) : (
                       <>

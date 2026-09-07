@@ -11,11 +11,12 @@ const generateExamQuestions = async ({
   subject,
 }) => {
   try {
+    const sourceText = String(text || "").replace(/\s+/g, " ").trim().slice(0, 16000);
     const result = await aiProvider.generateMCQs({
       subject: subject || "General",
-      materialText: text,
+      materialText: sourceText,
       questions: totalQuestions || 10,
-      difficulty: difficulty || "medium",
+      difficulty: "mixed",
       targetProficiencyLevel: 3,
       questionType: "knowledge",
       sourceReference: "Exam Material",
@@ -29,7 +30,7 @@ const generateExamQuestions = async ({
         options: q.options,
         correctAnswer: q.correctAnswer ?? q.correct,
         explanation: q.explanation,
-        difficulty: q.difficulty,
+        difficulty: { easy: 1, medium: 3, hard: 5 }[String(q.difficulty || "").toLowerCase()] || Number(q.difficulty) || 3,
       }));
     }
 

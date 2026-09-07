@@ -4,6 +4,7 @@ import { authorizeRoles } from "../middlewares/roleMiddleware.js";
 import {
   getStudentMaterials,
   downloadStudentMaterial,
+  generateStudentMaterialQuiz,
 } from "../controllers/studentMaterial.js";
 import ExamAttempt from "../models/ExamAttempt.js";
 import Exam from "../models/Exam.js";
@@ -89,6 +90,13 @@ router.get(
   protect,
   authorizeRoles("learner", "student"),
   downloadStudentMaterial
+);
+
+router.post(
+  "/materials/:id/generate-quiz",
+  protect,
+  authorizeRoles("learner", "student"),
+  generateStudentMaterialQuiz
 );
 
 

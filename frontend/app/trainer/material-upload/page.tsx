@@ -7,13 +7,6 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Upload, X } from 'lucide-react'
 import API from "@/lib/api"
 import { useEffect } from "react"
@@ -28,9 +21,6 @@ export default function MaterialUploadPage() {
   const [sendType, setSendType] = useState<'ALL' | 'SELECTED' | 'CLASS'>('ALL')
   const [classes, setClasses] = useState<any[]>([])
   const [selectedClass, setSelectedClass] = useState<string>('')
-  const [classification, setClassification] = useState('CATEGORY_A_OPEN_ACCESS')
-  const [classificationSource, setClassificationSource] = useState('MOSPI_GSDD_2026')
-  const [classificationReason, setClassificationReason] = useState('')
 
   useEffect(() => {
   const fetchData = async () => {
@@ -72,10 +62,6 @@ export default function MaterialUploadPage() {
   formData.append("title", topic)
   formData.append("description", subject)
   formData.append("sendType", sendType)
-  formData.append("classification", classification)
-  formData.append("classificationSource", classificationSource)
-  formData.append("classificationReason", classificationReason)
-  formData.append("externalAIAllowed", classification === 'CATEGORY_A_OPEN_ACCESS' ? 'true' : 'false')
 
   if (sendType === "SELECTED") {
     formData.append("selectedStudents", JSON.stringify(selectedStudents))
@@ -187,57 +173,6 @@ export default function MaterialUploadPage() {
             />
           </div>
 
-          {/* Classification */}
-          <div className="space-y-2 animate-[fadeIn_0.85s_ease-out]">
-            <Label className="text-sm font-medium text-gray-700">
-              Classification <span className="text-red-500">*</span>
-            </Label>
-            <Select value={classification} onValueChange={setClassification}>
-              <SelectTrigger className="h-10 border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                <SelectValue placeholder="Select classification" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="CATEGORY_A_OPEN_ACCESS">Category A — Open Access</SelectItem>
-                <SelectItem value="CATEGORY_B_REGISTERED_ACCESS">Category B — Registered Access</SelectItem>
-                <SelectItem value="CATEGORY_C_RESTRICTED_ACCESS">Category C — Restricted Access</SelectItem>
-                <SelectItem value="NON_SHAREABLE">Non-Shareable</SelectItem>
-                <SelectItem value="PUBLIC">Public (Legacy)</SelectItem>
-                <SelectItem value="INTERNAL">Internal (Legacy)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Classification Source */}
-          <div className="space-y-2 animate-[fadeIn_0.9s_ease-out]">
-            <Label className="text-sm font-medium text-gray-700">
-              Classification Source <span className="text-red-500">*</span>
-            </Label>
-            <Select value={classificationSource} onValueChange={setClassificationSource}>
-              <SelectTrigger className="h-10 border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                <SelectValue placeholder="Select source" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="MOSPI_GSDD_2026">MoSPI GSDD 2026</SelectItem>
-                <SelectItem value="SOURCE_AUTHORITY_POLICY">Source Authority Policy</SelectItem>
-                <SelectItem value="ORGANIZATION_POLICY">Organization Policy</SelectItem>
-                <SelectItem value="DOCUMENT_OWNER">Document Owner</SelectItem>
-                <SelectItem value="UNKNOWN">Unknown</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Classification Reason */}
-          <div className="space-y-2 animate-[fadeIn_0.95s_ease-out]">
-            <Label className="text-sm font-medium text-gray-700">
-              Classification Reason
-            </Label>
-            <Input
-              placeholder="e.g., Publicly available aggregated statistical information"
-              value={classificationReason}
-              onChange={(e) => setClassificationReason(e.target.value)}
-              className="h-10 border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors duration-200"
-            />
-          </div>
 
           {/* Send To Section */}
           <Card className="p-5 border border-gray-200 space-y-4 bg-gray-50/50 rounded-lg animate-[fadeIn_0.9s_ease-out]">

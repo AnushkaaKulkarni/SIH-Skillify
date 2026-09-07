@@ -21,7 +21,6 @@ function CreateExamContent() {
   const [topic, setTopic] = useState('')
   const [description, setDescription] = useState('')
   const [subject, setSubject] = useState('')
-  const [difficulty, setDifficulty] = useState('')
   const [scheduledDate, setScheduledDate] = useState('')
   const [scheduledTime, setScheduledTime] = useState('')
   const [notesFile, setNotesFile] = useState<File | null>(null)
@@ -61,10 +60,9 @@ const [selectedSemester, setSelectedSemester] = useState<string>('')
       setTopic(exam.title || '')
       setDescription(exam.description || '')
       setSubject(exam.subject || '')
-      setDifficulty(exam.difficulty || 'medium')
       setDuration(exam.duration || 60)
       setTotalQuestions(exam.questions?.length || 0)
-      setGeneratedQuiz({ topic: exam.title, subject: exam.subject, difficulty: exam.difficulty, questions: exam.questions || [] })
+      setGeneratedQuiz({ topic: exam.title, subject: exam.subject, questions: exam.questions || [] })
       setQuizGenerated(true)
       setExamApproved(exam.status !== 'DRAFT')
     }
@@ -86,7 +84,7 @@ const [selectedSemester, setSelectedSemester] = useState<string>('')
   }
 
   const handleGenerateQuiz = async () => {
-  if (!topic || !subject || !difficulty || !notesFile) {
+  if (!topic || !subject || !notesFile) {
     alert("Please fill all required fields and upload notes");
     return;
   }
@@ -102,7 +100,7 @@ const [selectedSemester, setSelectedSemester] = useState<string>('')
     formData.append("title", topic);
     formData.append("description", description);
     formData.append("subject", subject);
-    formData.append("difficulty", difficulty);
+    formData.append("difficulty", "mixed");
     formData.append("totalQuestions", String(totalQuestions));
     formData.append("duration", String(duration));
 
@@ -148,7 +146,6 @@ const [selectedSemester, setSelectedSemester] = useState<string>('')
     setGeneratedQuiz({
       topic,
       subject,
-      difficulty,
       questions: data.questions,
     });
 
@@ -437,23 +434,6 @@ const handleAssignStudents = async () => {
   />
 </div>
 
-              {/* Difficulty */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-foreground">
-                  Difficulty Level <span className="text-red-500">*</span>
-                </Label>
-                <Select value={difficulty} onValueChange={setDifficulty}>
-                  <SelectTrigger className="h-10 border-border bg-background">
-                    <SelectValue placeholder="Select difficulty" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Number of Questions */}
 <div className="space-y-2">
   <Label className="text-sm font-medium text-foreground">
@@ -489,7 +469,7 @@ const handleAssignStudents = async () => {
               <Button
                 type="button"
                 onClick={handleGenerateQuiz}
-                disabled={!topic || !subject || !difficulty || isGenerating}
+                disabled={!topic || !subject || isGenerating}
                 className="w-full bg-primary hover:bg-primary/90 h-11 gap-2 font-semibold"
               >
                 <Wand2 className="w-4 h-4" />
@@ -605,10 +585,6 @@ const handleAssignStudents = async () => {
                 <div>
                   <p className="text-xs text-muted-foreground">Subject</p>
                   <p className="font-semibold text-foreground capitalize">{generatedQuiz.subject}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Difficulty</p>
-                  <p className="font-semibold text-foreground capitalize">{generatedQuiz.difficulty}</p>
                 </div>
               </div>
 

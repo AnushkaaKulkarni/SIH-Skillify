@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,6 +20,7 @@ import { useEffect } from "react"
 
 
 export default function MaterialsPage() {
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedSubject, setSelectedSubject] = useState('')
   const [materialsData, setMaterialsData] = useState<any[]>([])
@@ -34,6 +36,24 @@ const [activeMaterial, setActiveMaterial] = useState<any | null>(null)
 const [selectedFile, setSelectedFile] = useState<string | null>(null)
 const [summary, setSummary] = useState<string>("")
 const [loading, setLoading] = useState(false)
+const [generatingQuiz, setGeneratingQuiz] = useState(false)
+const [generationStep, setGenerationStep] = useState('')
+
+const generateQuiz = async (material: any) => {
+  setGeneratingQuiz(true)
+  setGenerationStep('1/3 Preparing content')
+  try {
+    setGenerationStep('2/3 Qwen generating')
+    const response = await API.post(`/learner/materials/${material._id}/generate-quiz`, { questionCount: 10 })
+    setGenerationStep('3/3 Validating questions')
+    router.push(`/learner/quiz/take/${response.data.examId}`)
+  } catch (error: any) {
+    alert(error.response?.data?.message || 'Quiz generation failed')
+  } finally {
+    setGeneratingQuiz(false)
+    setGenerationStep('')
+  }
+}
 
 
 
@@ -234,16 +254,22 @@ const [loading, setLoading] = useState(false)
               by {activeMaterial.faculty?.fullName} • {new Date(activeMaterial.createdAt).toLocaleDateString()}
             </p>
           </div>
-          <Button
-            onClick={() => {
-              setSelectedFile(null)
-              setSummary("")
-            }}
-            variant="ghost"
-            className="h-8 px-3 text-sm text-gray-600 hover:text-gray-900"
-          >
-            ✕ Close
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => generateQuiz(activeMaterial)} disabled={generatingQuiz} className="h-8 text-sm">
+              <Sparkles className="w-4 h-4 mr-1" />
+              {generatingQuiz ? generationStep : 'Generate Quiz'}
+            </Button>
+            <Button
+              onClick={() => {
+                setSelectedFile(null)
+                setSummary("")
+              }}
+              variant="ghost"
+              className="h-8 px-3 text-sm text-gray-600 hover:text-gray-900"
+            >
+              ✕ Close
+            </Button>
+          </div>
         </div>
       )}
 
