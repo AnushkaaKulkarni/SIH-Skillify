@@ -172,19 +172,23 @@ GET ADMINISTRATOR OFFICIALS
 */
 export const getFacultyStudents = async (req, res) => {
   try {
-    const administrator = await User.findById(req.user._id)
-      .populate({
-  path: "students",
-  select: "fullName email phone studentId designation targetRole parents",
-  populate: {
-    path: "parents",
-    select: "fullName email phone parentId",
-  },
-});
+    const facultyId = req.user._id;
+    const faculty = await User.findById(facultyId).select("students").lean();
+    const Exam = (await import("../models/Exam.js")).default;
+    const examStudentIds = await Exam.distinct("assignedStudents", { faculty: facultyId });
+    const linkedStudentIds = await User.find({ faculties: facultyId, role: { $in: ["learner", "student"] } }).distinct("_id");
+    const ids = [...new Set([
+      ...(faculty?.students || []),
+      ...examStudentIds,
+      ...linkedStudentIds,
+    ].map((id) => String(id)))];
+    const learners = await User.find({ _id: { $in: ids } })
+      .select("fullName email phone studentId designation targetRole parents")
+      .populate("parents", "fullName email phone parentId")
+      .lean();
 
-
-    const students = await Promise.all(administrator.students.map(async (student) => ({
-      ...student.toObject(),
+    const students = await Promise.all(learners.map(async (student) => ({
+      ...student,
       competencyOverview: await getLearnerCompetencyOverview(student),
     })));
 

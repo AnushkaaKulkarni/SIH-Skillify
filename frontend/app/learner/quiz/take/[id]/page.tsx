@@ -208,7 +208,8 @@ const lastFaceEventRef = useRef(0)
       )
 
       if (!res.ok) {
-        alert('Exam not available')
+        const errorData = await res.json().catch(() => ({}))
+        alert(errorData.message || 'Exam not available')
         router.replace('/learner/quiz/scheduled')
         return
       }

@@ -167,9 +167,17 @@ router.get(
       const facultyId = req.user._id; // ✅ correct
 
       /* 1️⃣ TOTAL STUDENTS */
-      const faculty = await User.findById(facultyId).populate("students");
-      const totalStudents = faculty?.students?.length || 0;
-      const learnerProgress = await Promise.all((faculty?.students || []).map(async (student) => {
+      const faculty = await User.findById(facultyId).select("students").lean();
+      const exams = await Exam.find({ faculty: facultyId }).select("assignedStudents").lean();
+      const assignedIds = [
+        ...(faculty?.students || []),
+        ...(await User.find({ faculties: facultyId, role: { $in: ["learner", "student"] } }).distinct("_id")),
+        ...exams.flatMap((exam) => exam.assignedStudents || []),
+      ];
+      const uniqueStudentIds = [...new Set(assignedIds.map((id) => String(id)))];
+      const students = await User.find({ _id: { $in: uniqueStudentIds } }).lean();
+      const totalStudents = students.length;
+      const learnerProgress = await Promise.all(students.map(async (student) => {
         const [latestAttempt, overview] = await Promise.all([
           ExamAttempt.findOne({ student: student._id, status: { $in: ["SUBMITTED", "AUTO_SUBMITTED"] } })
             .sort({ submittedAt: -1 })

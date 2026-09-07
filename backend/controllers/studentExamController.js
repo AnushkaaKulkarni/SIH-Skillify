@@ -71,6 +71,12 @@ export const startScheduledExam = async (req, res) => {
       return res.status(404).json({ message: "Exam not found" });
     }
 
+    const isImmediateAssessment = ["DIAGNOSTIC", "MATERIAL"].includes(exam.assessmentType);
+
+    if (!exam.assignedStudents.some((student) => String(student) === String(req.user._id))) {
+      return res.status(403).json({ message: "This assessment is not assigned to this learner." });
+    }
+
     /* -------- TIME WINDOW CHECK -------- */
     const GRACE_MINUTES = 2;
 
@@ -81,13 +87,13 @@ export const startScheduledExam = async (req, res) => {
       start.getTime() - GRACE_MINUTES * 60000
     );
 
-    if (now < graceStart) {
+    if (!isImmediateAssessment && now < graceStart) {
       return res
         .status(403)
         .json({ message: "Exam has not started yet" });
     }
 
-    if (now > end) {
+    if (!isImmediateAssessment && now > end) {
       return res
         .status(403)
         .json({ message: "Exam has already ended" });
@@ -149,7 +155,7 @@ export const startScheduledExam = async (req, res) => {
     console.error("❌ Start exam error:", error)
     return res
       .status(500)
-      .json({ message: "Failed to start exam" })
+      .json({ message: error.message || "Failed to start exam" })
   }
 };
 
